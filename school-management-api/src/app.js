@@ -4,6 +4,12 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/user.routes');
+const studentRoutes = require('./routes/student.routes');
+const membershipRoutes = require('./routes/membership.routes');
+const membershipPlanRoutes = require('./routes/membership-plan.routes');
+const paymentRoutes = require('./routes/payment.routes');
 
 const app = express();
 
@@ -38,6 +44,14 @@ app.use(cookieParser());
 
 // Serve static files from uploads folder if needed
 app.use('/uploads', express.static('src/uploads'));
+
+// Auth routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/students', studentRoutes);
+app.use('/api/v1/membership-plans', membershipPlanRoutes);
+app.use('/api/v1/memberships', membershipRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 // Health check endpoint
 app.use('/api/health', (req, res) => {
