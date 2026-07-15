@@ -1,5 +1,6 @@
 const Payment = require('../models/payment.model');
-const MembershipPlan = require('../models/membership.model');
+const MembershipPlan = require('../models/membership-plan.model');
+const Membership = require('../models/membership.model');
 const Student = require('../models/student.model');
 const User = require('../models/user.model');
 const catchAsync = require('../utils/catchAsync');
@@ -108,7 +109,7 @@ const approvePayment = catchAsync(async (req, res, next) => {
     payment.reviewedAt = Date.now();
     await payment.save({ session });
 
-    // 2) Find or Create Student Membership inside session
+    // 2) Find or Create Student profile inside session
     let studentProfile = await Student.findOne({ email: payment.studentEmail }).session(session);
     const planName = payment.membershipPlan.name;
 
@@ -136,6 +137,24 @@ const approvePayment = catchAsync(async (req, res, next) => {
       );
       studentProfile = studentArray[0];
     }
+
+    // 3) Create a new Membership subscription record inside session
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setMonth(startDate.getMonth() + payment.membershipPlan.duration);
+
+    await Membership.create(
+      [
+        {
+          student: studentProfile._id,
+          plan: payment.membershipPlan._id,
+          startDate,
+          endDate,
+          status: 'Active',
+        },
+      ],
+      { session }
+    );
 
     // Commit Transaction
     await session.commitTransaction();

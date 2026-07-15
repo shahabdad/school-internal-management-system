@@ -1,30 +1,29 @@
 const mongoose = require('mongoose');
 
-const membershipPlanSchema = new mongoose.Schema(
+const membershipSchema = new mongoose.Schema(
   {
-    name: {
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Student',
+      required: [true, 'Membership must belong to a student'],
+    },
+    plan: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MembershipPlan',
+      required: [true, 'Membership must be associated with a plan'],
+    },
+    startDate: {
+      type: Date,
+      default: Date.now,
+    },
+    endDate: {
+      type: Date,
+      required: [true, 'Membership must have an end date'],
+    },
+    status: {
       type: String,
-      required: [true, 'Please provide membership plan name'],
-      unique: true,
-      trim: true,
-    },
-    price: {
-      type: Number,
-      required: [true, 'Please provide membership plan price'],
-      min: [0, 'Price cannot be negative'],
-    },
-    duration: {
-      type: Number,
-      required: [true, 'Please provide membership plan duration in months'],
-      min: [1, 'Duration must be at least 1 month'],
-    },
-    features: {
-      type: [String],
-      default: [],
-    },
-    active: {
-      type: Boolean,
-      default: true,
+      enum: ['Pending', 'Active', 'Expiring', 'Expired'],
+      default: 'Pending',
     },
   },
   {
@@ -32,6 +31,6 @@ const membershipPlanSchema = new mongoose.Schema(
   }
 );
 
-const MembershipPlan = mongoose.model('MembershipPlan', membershipPlanSchema);
+const Membership = mongoose.model('Membership', membershipSchema);
 
-module.exports = MembershipPlan;
+module.exports = Membership;
