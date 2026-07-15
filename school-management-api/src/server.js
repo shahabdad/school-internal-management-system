@@ -21,7 +21,7 @@ let server;
 
 if (DB) {
   mongoose
-    .connect(DB)
+    .connect(DB, { serverSelectionTimeoutMS: 5000 })
     .then(() => {
       console.log('Database connection successful!');
       server = startServer();
