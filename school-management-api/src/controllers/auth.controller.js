@@ -54,7 +54,7 @@ const sendTokensResponse = (user, statusCode, res) => {
  * @access  Public
  */
 const register = catchAsync(async (req, res, next) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
 
   // Prevent duplicate email registrations
   const existingUser = await User.findOne({ email });
@@ -66,7 +66,7 @@ const register = catchAsync(async (req, res, next) => {
     name,
     email,
     password,
-    role,
+    role: 'Student',
   });
 
   sendTokensResponse(newUser, 201, res);
@@ -80,11 +80,16 @@ const register = catchAsync(async (req, res, next) => {
 const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
-  // Retrieve user with password hash explicitly loaded
-  const user = await User.findOne({ email }).select('+password');
+  // Retrieve user with password hash and active flag explicitly loaded
+  const user = await User.findOne({ email }).select('+password +active');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
+  }
+
+  // Reject login for deactivated users
+  if (user.active === false) {
+    return next(new AppError('Your account is deactivated. Please contact support.', 401));
   }
 
   sendTokensResponse(user, 200, res);
@@ -127,10 +132,15 @@ const refreshToken = catchAsync(async (req, res, next) => {
     return next(new AppError('Invalid or expired refresh token. Please log in again.', 401));
   }
 
-  // Confirm user still exists
-  const currentUser = await User.findById(decoded.id);
+  // Confirm user still exists and select active field
+  const currentUser = await User.findById(decoded.id).select('+active');
   if (!currentUser) {
     return next(new AppError('The user belonging to this token no longer exists.', 401));
+  }
+
+  // Reject refresh token for deactivated users
+  if (currentUser.active === false) {
+    return next(new AppError('Your account has been deactivated.', 401));
   }
 
   // Ensure password has not changed since the token's issuance
@@ -156,7 +166,11 @@ const forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Find user by email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return next(new AppError('There is no user with that email address.', 404));
+    // Return same generic success response to avoid user enumeration
+    return res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email successfully!',
+    });
   }
 
   // 2) Generate password reset token

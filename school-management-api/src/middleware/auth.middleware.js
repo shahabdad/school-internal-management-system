@@ -24,12 +24,22 @@ const protect = catchAsync(async (req, res, next) => {
   // 2) Verify token signature and expiration
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-  // 3) Check if the user still exists in the database
-  const currentUser = await User.findById(decoded.id);
+  // 3) Check if the user still exists in the database and is active
+  const currentUser = await User.findById(decoded.id).select('+active');
   if (!currentUser) {
     return next(
       new AppError(
         'The user belonging to this token no longer exists.',
+        401
+      )
+    );
+  }
+
+  // Reject requests from deactivated users immediately
+  if (currentUser.active === false) {
+    return next(
+      new AppError(
+        'Your account has been deactivated.',
         401
       )
     );

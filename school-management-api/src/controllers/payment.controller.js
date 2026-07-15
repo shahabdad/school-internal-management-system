@@ -5,6 +5,7 @@ const User = require('../models/user.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { sendEmail } = require('../services/email.service');
+const fs = require('fs');
 
 /**
  * @route   POST /api/v1/payments/upload-proof
@@ -16,31 +17,46 @@ const uploadProof = catchAsync(async (req, res, next) => {
     return next(new AppError('Please upload proof of payment file', 400));
   }
 
+  const cleanupUploadedFile = () => {
+    if (req.file && req.file.path) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error(`Failed to delete dangling proof file: ${req.file.path}`, err.message);
+      });
+    }
+  };
+
   const { membershipPlanId } = req.body;
   if (!membershipPlanId) {
+    cleanupUploadedFile();
     return next(new AppError('Please provide a membership plan ID', 400));
   }
 
-  const plan = await MembershipPlan.findById(membershipPlanId);
-  if (!plan) {
-    return next(new AppError('Membership plan not found', 404));
+  try {
+    const plan = await MembershipPlan.findById(membershipPlanId);
+    if (!plan) {
+      cleanupUploadedFile();
+      return next(new AppError('Membership plan not found', 404));
+    }
+
+    const newPayment = await Payment.create({
+      student: req.user.id,
+      studentEmail: req.user.email,
+      membershipPlan: membershipPlanId,
+      proofOfPayment: req.file.path.replace(/\\/g, '/'), // normalization
+      amount: plan.price,
+      status: 'Pending',
+    });
+
+    res.status(201).json({
+      status: 'success',
+      data: {
+        payment: newPayment,
+      },
+    });
+  } catch (err) {
+    cleanupUploadedFile();
+    return next(err);
   }
-
-  const newPayment = await Payment.create({
-    student: req.user.id,
-    studentEmail: req.user.email,
-    membershipPlan: membershipPlanId,
-    proofOfPayment: req.file.path.replace(/\\/g, '/'), // normalization
-    amount: plan.price,
-    status: 'Pending',
-  });
-
-  res.status(201).json({
-    status: 'success',
-    data: {
-      payment: newPayment,
-    },
-  });
 });
 
 /**
@@ -68,6 +84,7 @@ const getAllPayments = catchAsync(async (req, res, next) => {
  * @access  Private (CustomerService, Admin, CEO)
  */
 const approvePayment = catchAsync(async (req, res, next) => {
+  const mongoose = require('mongoose');
   const payment = await Payment.findById(req.params.id).populate('membershipPlan');
 
   if (!payment) {
@@ -80,54 +97,74 @@ const approvePayment = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Update payment status
-  payment.status = 'Approved';
-  payment.reviewedBy = req.user.id;
-  payment.reviewedAt = Date.now();
-  await payment.save();
+  // Start MongoDB transaction session
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // Find or Create Student Membership
-  let studentProfile = await Student.findOne({ email: payment.studentEmail });
-  const planName = payment.membershipPlan.name;
-
-  if (studentProfile) {
-    studentProfile.membership = planName;
-    studentProfile.status = 'Active';
-    await studentProfile.save();
-  } else {
-    // Retrieve student user profile to grab the name
-    const studentUser = await User.findById(payment.student);
-    const studentName = studentUser ? studentUser.name : 'Student User';
-
-    studentProfile = await Student.create({
-      name: studentName,
-      email: payment.studentEmail,
-      phone: 'N/A',
-      address: 'N/A',
-      membership: planName,
-      status: 'Active',
-    });
-  }
-
-  // Send Notification Mock Email
   try {
-    await sendEmail({
-      email: payment.studentEmail,
-      subject: 'Payment Approved & Membership Activated',
-      message: `Dear ${studentProfile.name},\n\nYour payment of $${payment.amount} has been successfully approved!\nYour membership status has been activated to the "${planName}" plan.\n\nThank you,\nSchool Management Team`,
-    });
-  } catch (err) {
-    // Non-blocking email sending failure
-    console.error('Failed to send notification email:', err.message);
-  }
+    // 1) Update payment status
+    payment.status = 'Approved';
+    payment.reviewedBy = req.user.id;
+    payment.reviewedAt = Date.now();
+    await payment.save({ session });
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      payment,
-      studentProfile,
-    },
-  });
+    // 2) Find or Create Student Membership inside session
+    let studentProfile = await Student.findOne({ email: payment.studentEmail }).session(session);
+    const planName = payment.membershipPlan.name;
+
+    if (studentProfile) {
+      studentProfile.membership = planName;
+      studentProfile.status = 'Active';
+      await studentProfile.save({ session });
+    } else {
+      // Retrieve student user profile to grab the name
+      const studentUser = await User.findById(payment.student).session(session);
+      const studentName = studentUser ? studentUser.name : 'Student User';
+
+      const studentArray = await Student.create(
+        [
+          {
+            name: studentName,
+            email: payment.studentEmail,
+            phone: 'N/A',
+            address: 'N/A',
+            membership: planName,
+            status: 'Active',
+          },
+        ],
+        { session }
+      );
+      studentProfile = studentArray[0];
+    }
+
+    // Commit Transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    // Send Notification Mock Email (Non-blocking, outside transaction)
+    try {
+      await sendEmail({
+        email: payment.studentEmail,
+        subject: 'Payment Approved & Membership Activated',
+        message: `Dear ${studentProfile.name},\n\nYour payment of $${payment.amount} has been successfully approved!\nYour membership status has been activated to the "${planName}" plan.\n\nThank you,\nSchool Management Team`,
+      });
+    } catch (err) {
+      console.error('Failed to send notification email:', err.message);
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        payment,
+        studentProfile,
+      },
+    });
+  } catch (error) {
+    // Abort Transaction in case of failure
+    await session.abortTransaction();
+    session.endSession();
+    return next(error);
+  }
 });
 
 /**
