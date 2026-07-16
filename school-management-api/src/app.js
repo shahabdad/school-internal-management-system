@@ -14,6 +14,7 @@ const paymentRoutes = require('./routes/payment.routes');
 const complaintRoutes = require('./routes/complaint.routes');
 const callLogRoutes = require('./routes/call-log.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/complaints', complaintRoutes);
 app.use('/api/v1/call-logs', callLogRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 // Health check endpoint
 app.use('/api/health', (req, res) => {
