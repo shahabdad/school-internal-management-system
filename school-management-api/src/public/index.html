@@ -1152,6 +1152,98 @@
           </div>
         </div>
 
+        <!-- Dashboard Overview Card -->
+        <div class="dashboard-card staff-card" id="cs-dashboard-card" style="display:none; margin-bottom:2rem;">
+          <div class="card-title">Dashboard Operational Stats</div>
+          
+          <!-- Key Metrics Row -->
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; margin-bottom:1.5rem;">
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:1rem; border-radius:0.75rem; text-align:center;">
+              <div style="font-size:1.5rem; margin-bottom:0.25rem;">🎓</div>
+              <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Total Students</div>
+              <div id="stat-total-students" style="font-size:1.25rem; font-weight:800; color:white; margin-top:0.25rem;">0</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:1rem; border-radius:0.75rem; text-align:center;">
+              <div style="font-size:1.5rem; margin-bottom:0.25rem;">🟢</div>
+              <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Active Members</div>
+              <div id="stat-active-members" style="font-size:1.25rem; font-weight:800; color:white; margin-top:0.25rem;">0</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:1rem; border-radius:0.75rem; text-align:center;">
+              <div style="font-size:1.5rem; margin-bottom:0.25rem;">⏳</div>
+              <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Pending Reviews</div>
+              <div id="stat-pending-payments" style="font-size:1.25rem; font-weight:800; color:white; margin-top:0.25rem;">0</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); padding:1rem; border-radius:0.75rem; text-align:center;">
+              <div style="font-size:1.5rem; margin-bottom:0.25rem;">💰</div>
+              <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Monthly Revenue</div>
+              <div id="stat-monthly-revenue" style="font-size:1.25rem; font-weight:800; color:var(--color-emerald); margin-top:0.25rem;">$0.00</div>
+            </div>
+          </div>
+
+          <!-- Secondary Metrics Subgrid -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1.5rem;">
+            <!-- Complaint stats -->
+            <div>
+              <h4 style="font-size:0.85rem; font-weight:700; color:white; margin-bottom:0.75rem; display:flex; justify-content:space-between;">
+                <span>Complaint Statistics</span>
+                <span id="stat-complaints-total" style="color:var(--text-muted); font-weight:normal;">Total: 0</span>
+              </h4>
+              <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.8rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Created (New):</span>
+                  <strong id="stat-complaints-created" class="card-badge badge-pending" style="padding:0.1rem 0.35rem; font-size:0.7rem;">0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Assigned:</span>
+                  <strong id="stat-complaints-assigned" class="card-badge badge-pending" style="padding:0.1rem 0.35rem; font-size:0.7rem; background:#6366f1;">0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Under Review:</span>
+                  <strong id="stat-complaints-review" class="card-badge badge-pending" style="padding:0.1rem 0.35rem; font-size:0.7rem; background:#eab308; color:black;">0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Solved:</span>
+                  <strong id="stat-complaints-solved" class="card-badge badge-active" style="padding:0.1rem 0.35rem; font-size:0.7rem;">0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Closed:</span>
+                  <strong id="stat-complaints-closed" class="card-badge badge-expired" style="padding:0.1rem 0.35rem; font-size:0.7rem;">0</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- CS Call Performance -->
+            <div>
+              <h4 style="font-size:0.85rem; font-weight:700; color:white; margin-bottom:0.75rem; display:flex; justify-content:space-between;">
+                <span>Call Center Performance</span>
+                <span id="stat-calls-total" style="color:var(--text-muted); font-weight:normal;">Total Calls: 0</span>
+              </h4>
+              <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.8rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Avg Call Duration:</span>
+                  <strong id="stat-calls-avg-duration" style="color:white;">0s</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>No Answer:</span>
+                  <strong id="stat-calls-no-answer" style="color:var(--color-secondary);">0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Interested:</span>
+                  <strong id="stat-calls-interested" style="color:var(--color-emerald);">0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Follow-up:</span>
+                  <strong id="stat-calls-follow-up" style="color:#eab308;">0</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Joined / Upgraded:</span>
+                  <strong id="stat-calls-conversion" style="color:#38bdf8;">0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="dashboard-card staff-card" id="cs-queue-card" style="display:none;">
           <div class="card-title">
             <span>Pending Payment Reviews</span>
@@ -1362,6 +1454,7 @@
         document.getElementById('cs-login-card').style.display = 'none';
         document.getElementById('cs-profile-card').style.display = 'block';
         document.getElementById('cs-call-logs-card').style.display = 'block';
+        document.getElementById('cs-dashboard-card').style.display = 'block';
         document.getElementById('cs-welcome-info').style.display = 'none';
         document.getElementById('cs-queue-card').style.display = 'block';
         document.getElementById('cs-reminder-jobs-card').style.display = 'block';
@@ -1374,6 +1467,7 @@
         document.getElementById('cs-login-card').style.display = 'block';
         document.getElementById('cs-profile-card').style.display = 'none';
         document.getElementById('cs-call-logs-card').style.display = 'none';
+        document.getElementById('cs-dashboard-card').style.display = 'none';
         document.getElementById('cs-welcome-info').style.display = 'block';
         document.getElementById('cs-queue-card').style.display = 'none';
         document.getElementById('cs-reminder-jobs-card').style.display = 'none';
@@ -1733,6 +1827,7 @@
         await loadCSComplaints();
         await loadCSStudentsDropdown();
         await loadCallLogs();
+        await loadDashboardStats();
       } catch (err) {
         console.error(err);
       }
@@ -2468,6 +2563,46 @@
         btn.innerText = '⏰ Simulate Expiry Check';
         btn.disabled = false;
       }
+    }
+
+    // Fetch and display CS Dashboard Stats
+    async function loadDashboardStats() {
+      if (!state.csToken) return;
+      try {
+        const res = await apiRequest('/api/v1/dashboard/stats');
+        renderDashboardStats(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Render stats metrics onto DOM
+    function renderDashboardStats(data) {
+      const { metrics, complaints, csPerformance } = data.data;
+      
+      // Core metric cards
+      document.getElementById('stat-total-students').innerText = metrics.totalStudents;
+      document.getElementById('stat-active-members').innerText = metrics.activeMembers;
+      document.getElementById('stat-pending-payments').innerText = metrics.pendingPayments;
+      document.getElementById('stat-monthly-revenue').innerText = `$${metrics.monthlyRevenue.toFixed(2)}`;
+
+      // Complaints stats
+      document.getElementById('stat-complaints-total').innerText = `Total: ${complaints.total}`;
+      document.getElementById('stat-complaints-created').innerText = complaints.Created;
+      document.getElementById('stat-complaints-assigned').innerText = complaints.Assigned;
+      document.getElementById('stat-complaints-review').innerText = complaints.UnderReview;
+      document.getElementById('stat-complaints-solved').innerText = complaints.Solved;
+      document.getElementById('stat-complaints-closed').innerText = complaints.Closed;
+
+      // CS performance calls stats
+      document.getElementById('stat-calls-total').innerText = `Total Calls: ${csPerformance.calls.total}`;
+      document.getElementById('stat-calls-avg-duration').innerText = `${csPerformance.avgCallDuration}s`;
+      document.getElementById('stat-calls-no-answer').innerText = csPerformance.calls['No Answer'];
+      document.getElementById('stat-calls-interested').innerText = csPerformance.calls['Interested'];
+      document.getElementById('stat-calls-follow-up').innerText = csPerformance.calls['Follow-up'];
+      
+      const conversion = csPerformance.calls['Joined'] + csPerformance.calls['Upgraded'];
+      document.getElementById('stat-calls-conversion').innerText = conversion;
     }
 
     function escapeHtml(str) {

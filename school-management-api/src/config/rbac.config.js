@@ -21,6 +21,7 @@ const PERMISSIONS = {
     complaints: ['manage'],
     users: ['read'],
     callLogs: ['create', 'read', 'update'],
+    dashboard: ['read'],
   },
   [ROLES.OPERATIONS_MANAGER]: {
     students: ['read'],
@@ -29,6 +30,7 @@ const PERMISSIONS = {
     complaints: ['manage'],
     users: ['read'],
     callLogs: ['read'],
+    dashboard: ['read'],
   },
   [ROLES.ADMIN]: {
     students: ['create', 'read', 'update', 'delete'], // CRUD
@@ -37,6 +39,7 @@ const PERMISSIONS = {
     complaints: ['create', 'read', 'update', 'delete'], // CRUD
     users: ['create', 'read', 'update', 'delete'], // CRUD
     callLogs: ['create', 'read', 'update', 'delete'], // CRUD
+    dashboard: ['create', 'read', 'update', 'delete'], // CRUD
   },
   [ROLES.CEO]: {
     students: ['*'], // Full
@@ -45,6 +48,7 @@ const PERMISSIONS = {
     complaints: ['*'], // Full
     users: ['*'], // Full
     callLogs: ['*'], // Full
+    dashboard: ['*'], // Full
   },
 };
 
