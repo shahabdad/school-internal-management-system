@@ -6,6 +6,7 @@ const {
   refreshToken,
   forgotPassword,
   resetPassword,
+  seedDatabase,
 } = require('../controllers/auth.controller');
 const {
   validateRegister,
@@ -24,6 +25,7 @@ router.post('/logout', logout);
 router.post('/refresh-token', refreshToken);
 router.post('/forgot-password', validateForgotPassword, forgotPassword);
 router.post('/reset-password', validateResetPassword, resetPassword);
+router.post('/seed', seedDatabase);
 
 // RBAC integration test routes
 router.get('/test/students-read', authenticate, checkPermission('students', 'read'), (req, res) => {

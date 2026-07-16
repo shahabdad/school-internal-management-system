@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -10,6 +11,9 @@ const studentRoutes = require('./routes/student.routes');
 const membershipRoutes = require('./routes/membership.routes');
 const membershipPlanRoutes = require('./routes/membership-plan.routes');
 const paymentRoutes = require('./routes/payment.routes');
+const complaintRoutes = require('./routes/complaint.routes');
+const callLogRoutes = require('./routes/call-log.routes');
+const notificationRoutes = require('./routes/notification.routes');
 
 const app = express();
 
@@ -44,6 +48,7 @@ app.use(cookieParser());
 
 // Serve static files from uploads folder if needed
 app.use('/uploads', express.static('src/uploads'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Auth routes
 app.use('/api/v1/auth', authRoutes);
@@ -52,6 +57,9 @@ app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/membership-plans', membershipPlanRoutes);
 app.use('/api/v1/memberships', membershipRoutes);
 app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/complaints', complaintRoutes);
+app.use('/api/v1/call-logs', callLogRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Health check endpoint
 app.use('/api/health', (req, res) => {

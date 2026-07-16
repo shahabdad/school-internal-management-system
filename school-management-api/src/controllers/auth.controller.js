@@ -1,6 +1,14 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/user.model');
+const Student = require('../models/student.model');
+const MembershipPlan = require('../models/membership-plan.model');
+const Membership = require('../models/membership.model');
+const Payment = require('../models/payment.model');
+const ReminderJob = require('../models/reminder-job.model');
+const Complaint = require('../models/complaint.model');
+const CallLog = require('../models/call-log.model');
+const Notification = require('../models/notification.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { sendEmail } = require('../services/email.service');
@@ -238,6 +246,123 @@ const resetPassword = catchAsync(async (req, res, next) => {
   // 4) Login and send fresh authentication response
   sendTokensResponse(user, 200, res);
 });
+const seedDatabase = catchAsync(async (req, res, next) => {
+  // 1) Clear existing data
+  await User.deleteMany({});
+  await Student.deleteMany({});
+  await MembershipPlan.deleteMany({});
+  await Membership.deleteMany({});
+  await Payment.deleteMany({});
+  await ReminderJob.deleteMany({});
+  await Complaint.deleteMany({});
+  await CallLog.deleteMany({});
+  await Notification.deleteMany({});
+
+  // 2) Seed Membership Plans
+  const plans = await MembershipPlan.create([
+    {
+      name: 'Basic',
+      price: 50,
+      duration: 1,
+      features: ['Access to Gym equipment', 'Locker Room access'],
+      active: true,
+    },
+    {
+      name: 'Premium',
+      price: 120,
+      duration: 3,
+      features: ['Access to Gym & Pool', 'Locker Room access', '1 Trainer session/mo'],
+      active: true,
+    },
+    {
+      name: 'VIP',
+      price: 400,
+      duration: 12,
+      features: ['All Access', 'Locker Room access', 'Unlimited Trainer sessions', 'Free smoothie bar'],
+      active: true,
+    },
+  ]);
+
+  const basicPlan = plans.find(p => p.name === 'Basic');
+
+  // 3) Seed Users (Student and CS Agent)
+  const studentUser = await User.create({
+    name: 'Student User',
+    email: 'student@example.com',
+    password: 'password123',
+    role: 'Student',
+  });
+
+  const csUser = await User.create({
+    name: 'CS Agent',
+    email: 'cs@example.com',
+    password: 'password123',
+    role: 'CustomerService',
+  });
+
+  // 4) Seed Student Profile
+  const studentProfile = await Student.create({
+    name: 'Student User',
+    email: 'student@example.com',
+    phone: '123-456-7890',
+    address: '123 Main St, School Town',
+    membership: 'Basic',
+    status: 'Active',
+  });
+
+  // 5) Seed Student Membership (expiring in 15 days)
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 15); // Started 15 days ago
+  
+  const endDate = new Date(startDate);
+  endDate.setMonth(startDate.getMonth() + 1); // Valid for 1 month (expires in 15 days from now)
+
+  const createdMembership = await Membership.create({
+    student: studentProfile._id,
+    plan: basicPlan._id,
+    startDate,
+    endDate,
+    status: 'Active',
+  });
+
+  // 6) Seed Reminder Job for starter membership
+  const reminderDate = new Date(endDate);
+  reminderDate.setDate(reminderDate.getDate() - 7);
+
+  await ReminderJob.create({
+    student: studentProfile._id,
+    membership: createdMembership._id,
+    reminderDate,
+    status: 'Pending',
+  });
+
+  // 7) Seed starter Complaint
+  await Complaint.create({
+    student: studentProfile._id,
+    title: 'Locker lock is broken',
+    description: 'The lock of my locker #42 is broken and will not lock. Please repair it as soon as possible.',
+    status: 'Created',
+  });
+
+  // 8) Seed starter Call Log
+  await CallLog.create({
+    student: studentProfile._id,
+    agent: csUser._id,
+    date: new Date(),
+    duration: 180,
+    result: 'Interested',
+    notes: 'Called the student to follow up on gym portal activation. They expressed interest in upgrading to Premium.',
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Database seeded successfully with default plans and credentials!',
+    credentials: {
+      student: { email: 'student@example.com', password: 'password123' },
+      csAgent: { email: 'cs@example.com', password: 'password123' },
+    }
+  });
+});
 
 module.exports = {
   register,
@@ -246,4 +371,6 @@ module.exports = {
   refreshToken,
   forgotPassword,
   resetPassword,
+  seedDatabase,
 };
+

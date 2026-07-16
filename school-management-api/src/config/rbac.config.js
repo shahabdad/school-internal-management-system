@@ -20,6 +20,7 @@ const PERMISSIONS = {
     memberships: ['update', 'read'],
     complaints: ['manage'],
     users: ['read'],
+    callLogs: ['create', 'read', 'update'],
   },
   [ROLES.OPERATIONS_MANAGER]: {
     students: ['read'],
@@ -27,6 +28,7 @@ const PERMISSIONS = {
     memberships: ['read'],
     complaints: ['manage'],
     users: ['read'],
+    callLogs: ['read'],
   },
   [ROLES.ADMIN]: {
     students: ['create', 'read', 'update', 'delete'], // CRUD
@@ -34,6 +36,7 @@ const PERMISSIONS = {
     memberships: ['create', 'read', 'update', 'delete'], // CRUD
     complaints: ['create', 'read', 'update', 'delete'], // CRUD
     users: ['create', 'read', 'update', 'delete'], // CRUD
+    callLogs: ['create', 'read', 'update', 'delete'], // CRUD
   },
   [ROLES.CEO]: {
     students: ['*'], // Full
@@ -41,6 +44,7 @@ const PERMISSIONS = {
     memberships: ['*'], // Full
     complaints: ['*'], // Full
     users: ['*'], // Full
+    callLogs: ['*'], // Full
   },
 };
 

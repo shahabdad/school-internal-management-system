@@ -1,11 +1,14 @@
+
 const Payment = require('../models/payment.model');
 const MembershipPlan = require('../models/membership-plan.model');
 const Membership = require('../models/membership.model');
 const Student = require('../models/student.model');
 const User = require('../models/user.model');
+const ReminderJob = require('../models/reminder-job.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { sendEmail } = require('../services/email.service');
+const { createNotification } = require('./notification.controller');
 const fs = require('fs');
 
 /**
@@ -47,6 +50,25 @@ const uploadProof = catchAsync(async (req, res, next) => {
       amount: plan.price,
       status: 'Pending',
     });
+
+    // Trigger notifications for: Payment submitted
+    // 1. Notify Student
+    await createNotification(
+      req.user.id,
+      'Payment Submitted',
+      `Your payment proof for the "${plan.name}" plan has been submitted successfully and is pending review.`,
+      'payment_submitted'
+    );
+    // 2. Notify CS Agents
+    const csAgents = await User.find({ role: 'CustomerService' });
+    for (const agent of csAgents) {
+      await createNotification(
+        agent._id,
+        'Payment Submitted',
+        `A new payment proof from ${req.user.name} (${req.user.email}) for the "${plan.name}" plan is pending review.`,
+        'payment_submitted'
+      );
+    }
 
     res.status(201).json({
       status: 'success',
@@ -138,34 +160,109 @@ const approvePayment = catchAsync(async (req, res, next) => {
       studentProfile = studentArray[0];
     }
 
-    // 3) Create a new Membership subscription record inside session
-    const startDate = new Date();
-    const endDate = new Date(startDate);
-    endDate.setMonth(startDate.getMonth() + payment.membershipPlan.duration);
+    // 3) Handle Membership subscription and Reminder Jobs inside session
+    const existingMembership = await Membership.findOne({
+      student: studentProfile._id,
+      status: { $in: ['Active', 'Expiring'] },
+      endDate: { $gt: new Date() },
+    }).session(session);
 
-    await Membership.create(
-      [
-        {
-          student: studentProfile._id,
-          plan: payment.membershipPlan._id,
-          startDate,
-          endDate,
-          status: 'Active',
-        },
-      ],
-      { session }
-    );
+    let startDate, endDate, isRenewal = false;
+
+    if (existingMembership) {
+      isRenewal = true;
+      startDate = new Date(existingMembership.startDate);
+      // Extend the membership
+      endDate = new Date(existingMembership.endDate);
+      endDate.setMonth(endDate.getMonth() + payment.membershipPlan.duration);
+
+      existingMembership.plan = payment.membershipPlan._id;
+      existingMembership.endDate = endDate;
+      existingMembership.status = 'Active';
+      await existingMembership.save({ session });
+
+      // Update or create ReminderJob
+      const reminderDate = new Date(endDate);
+      reminderDate.setDate(reminderDate.getDate() - 7);
+
+      const reminder = await ReminderJob.findOne({ membership: existingMembership._id }).session(session);
+      if (reminder) {
+        reminder.reminderDate = reminderDate;
+        reminder.status = 'Pending';
+        await reminder.save({ session });
+      } else {
+        await ReminderJob.create(
+          [
+            {
+              student: studentProfile._id,
+              membership: existingMembership._id,
+              reminderDate,
+              status: 'Pending',
+            },
+          ],
+          { session }
+        );
+      }
+    } else {
+      startDate = new Date();
+      endDate = new Date(startDate);
+      endDate.setMonth(startDate.getMonth() + payment.membershipPlan.duration);
+
+      const membershipArray = await Membership.create(
+        [
+          {
+            student: studentProfile._id,
+            plan: payment.membershipPlan._id,
+            startDate,
+            endDate,
+            status: 'Active',
+          },
+        ],
+        { session }
+      );
+      const newMembership = membershipArray[0];
+
+      // Create ReminderJob
+      const reminderDate = new Date(endDate);
+      reminderDate.setDate(reminderDate.getDate() - 7);
+
+      await ReminderJob.create(
+        [
+          {
+            student: studentProfile._id,
+            membership: newMembership._id,
+            reminderDate,
+            status: 'Pending',
+          },
+        ],
+        { session }
+      );
+    }
 
     // Commit Transaction
     await session.commitTransaction();
     session.endSession();
 
+    // Trigger notification: Payment approved
+    await createNotification(
+      payment.student,
+      'Payment Approved',
+      `Your payment proof of $${payment.amount} has been approved! Your membership is now Active.`,
+      'payment_approved'
+    );
+
     // Send Notification Mock Email (Non-blocking, outside transaction)
     try {
+      const expiryString = endDate.toDateString();
+      const subject = isRenewal ? 'Membership Renewed & Extended' : 'Payment Approved & Membership Activated';
+      const message = isRenewal
+        ? `Dear ${studentProfile.name},\n\nYour payment of $${payment.amount} has been successfully approved!\nYour membership has been renewed/extended to the "${planName}" plan.\nYour new expiry date is: ${expiryString}.\n\nThank you,\nSchool Management Team`
+        : `Dear ${studentProfile.name},\n\nYour payment of $${payment.amount} has been successfully approved!\nYour membership status has been activated to the "${planName}" plan.\nYour membership expiry date is: ${expiryString}.\n\nThank you,\nSchool Management Team`;
+
       await sendEmail({
         email: payment.studentEmail,
-        subject: 'Payment Approved & Membership Activated',
-        message: `Dear ${studentProfile.name},\n\nYour payment of $${payment.amount} has been successfully approved!\nYour membership status has been activated to the "${planName}" plan.\n\nThank you,\nSchool Management Team`,
+        subject,
+        message,
       });
     } catch (err) {
       console.error('Failed to send notification email:', err.message);
@@ -176,6 +273,8 @@ const approvePayment = catchAsync(async (req, res, next) => {
       data: {
         payment,
         studentProfile,
+        expiryDate: endDate,
+        isRenewal,
       },
     });
   } catch (error) {
@@ -209,6 +308,14 @@ const rejectPayment = catchAsync(async (req, res, next) => {
   payment.reviewedBy = req.user.id;
   payment.reviewedAt = Date.now();
   await payment.save();
+
+  // Trigger notification: Payment rejected
+  await createNotification(
+    payment.student,
+    'Payment Rejected',
+    `Your payment proof of $${payment.amount} was rejected. Please re-upload a valid receipt.`,
+    'payment_rejected'
+  );
 
   // Retrieve student user profile to grab the name
   const studentUser = await User.findById(payment.student);

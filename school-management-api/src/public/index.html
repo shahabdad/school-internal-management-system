@@ -1,0 +1,2479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Membership Renewal Portal - School Management</title>
+  <!-- Google Fonts Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
+      --card-bg: rgba(30, 41, 59, 0.4);
+      --card-border: rgba(255, 255, 255, 0.05);
+      --input-bg: rgba(15, 23, 42, 0.6);
+      --input-border: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --color-primary: #8b5cf6;     /* Purple */
+      --color-primary-glow: rgba(139, 92, 246, 0.35);
+      --color-secondary: #06b6d4;   /* Cyan */
+      --color-secondary-glow: rgba(6, 182, 212, 0.35);
+      
+      --color-emerald: #10b981;
+      --color-rose: #ef4444;
+      --color-amber: #f59e0b;
+      
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      backdrop-filter: blur(10px);
+      background: rgba(15, 23, 42, 0.5);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: white;
+      box-shadow: 0 0 15px var(--color-primary-glow);
+    }
+
+    .logo-text h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .logo-text p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    button {
+      font-family: inherit;
+      font-weight: 500;
+      border: none;
+      border-radius: 0.625rem;
+      padding: 0.625rem 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition);
+    }
+
+    .btn-seed {
+      background: linear-gradient(135deg, var(--color-amber), #d97706);
+      color: white;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-seed:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+    }
+
+    .role-selector {
+      display: flex;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--input-border);
+      border-radius: 0.75rem;
+      padding: 0.25rem;
+    }
+
+    .role-btn {
+      padding: 0.5rem 1.25rem;
+      font-size: 0.875rem;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 0.5rem;
+    }
+
+    .role-btn.active-student {
+      background: var(--color-primary);
+      color: white;
+      box-shadow: 0 4px 12px var(--color-primary-glow);
+    }
+
+    .role-btn.active-cs {
+      background: var(--color-secondary);
+      color: white;
+      box-shadow: 0 4px 12px var(--color-secondary-glow);
+    }
+
+    main {
+      flex: 1;
+      padding: 2.5rem 2rem;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+
+    .panel-container {
+      display: none;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .panel-container.active {
+      display: grid;
+      grid-template-columns: 1.2fr 1.8fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      .panel-container.active {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dashboard-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1.25rem;
+      padding: 2rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dashboard-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: transparent;
+    }
+
+    .student-card::before {
+      background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+    }
+
+    .staff-card::before {
+      background: linear-gradient(90deg, var(--color-secondary), var(--color-primary));
+    }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-badge {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--color-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-expiring {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--color-amber);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-expired {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--color-rose);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-pending {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--color-secondary);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-field {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 0.75rem;
+      padding: 0.875rem 1rem;
+      color: white;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .input-field:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+      color: white;
+      padding: 0.875rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      justify-content: center;
+      box-shadow: 0 4px 14px var(--color-primary-glow);
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+    }
+
+    .btn-submit-cs {
+      width: 100%;
+      background: linear-gradient(135deg, var(--color-secondary), #0891b2);
+      color: white;
+      padding: 0.875rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      justify-content: center;
+      box-shadow: 0 4px 14px var(--color-secondary-glow);
+    }
+
+    .btn-submit-cs:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+    }
+
+    .quick-creds {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      border: 1px dashed var(--input-border);
+    }
+
+    .quick-creds-btn {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--input-border);
+    }
+
+    .quick-creds-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Membership card design */
+    .membership-card {
+      background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1.25rem;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+      margin-bottom: 2rem;
+    }
+
+    .membership-card::after {
+      content: '';
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+      top: -100px;
+      right: -100px;
+      pointer-events: none;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2rem;
+    }
+
+    .card-holder {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .card-holder-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+    }
+
+    .card-tier {
+      font-size: 1.25rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #c084fc, #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .card-date-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .date-item h4 {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .date-item p {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 0.2rem;
+    }
+
+    .timer-container {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .timer-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .timer-days {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--color-amber);
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-amber), #f97316);
+      width: 50%;
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+
+    /* Plan Selection Grid */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .plan-option-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--input-border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .plan-option-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(139, 92, 246, 0.5);
+      transform: translateY(-4px);
+    }
+
+    .plan-option-card.selected {
+      background: rgba(139, 92, 246, 0.12);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.25);
+    }
+
+    .plan-option-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: var(--color-primary);
+      color: white;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .plan-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .plan-price {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+
+    .plan-price span {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .plan-features-list {
+      list-style: none;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-top: auto;
+    }
+
+    .plan-features-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .plan-features-list li::before {
+      content: '•';
+      color: var(--color-primary);
+      font-weight: bold;
+    }
+
+    /* Upload Container */
+    .upload-container {
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      padding: 2rem;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 1.5rem;
+    }
+
+    .upload-container:hover {
+      border-color: var(--color-primary);
+      background: rgba(139, 92, 246, 0.03);
+    }
+
+    .upload-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--color-primary);
+    }
+
+    .upload-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .upload-subtext {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    #file-selected-info {
+      display: none;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      margin-bottom: 1rem;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    #file-selected-name {
+      font-weight: 600;
+      color: var(--color-emerald);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-remove-file {
+      background: transparent;
+      color: var(--color-rose);
+      font-weight: bold;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+    }
+
+    /* Queue Table / Item Cards */
+    .payments-queue {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .queue-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      padding: 1.25rem;
+      transition: var(--transition);
+    }
+
+    .queue-item:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .queue-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .student-info h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .student-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .queue-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .detail-col span {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.15rem;
+    }
+
+    .detail-col p {
+      font-weight: 600;
+    }
+
+    .proof-link {
+      color: var(--color-secondary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .proof-link:hover {
+      text-decoration: underline;
+    }
+
+    .queue-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn-approve {
+      flex: 1;
+      background: var(--color-emerald);
+      color: white;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .btn-approve:hover {
+      background: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-reject {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--color-rose);
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .btn-reject:hover {
+      background: var(--color-rose);
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Toast Notification */
+    #toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .toast {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--input-border);
+      border-left: 4px solid var(--color-primary);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      min-width: 300px;
+      max-width: 450px;
+    }
+
+    .toast-success {
+      border-left-color: var(--color-emerald);
+    }
+
+    .toast-error {
+      border-left-color: var(--color-rose);
+    }
+
+    .toast-info {
+      border-left-color: var(--color-secondary);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Modal dialog mock overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(2, 6, 23, 0.85);
+      backdrop-filter: blur(6px);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 1.5rem;
+      max-width: 600px;
+      width: 100%;
+      padding: 2.25rem;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      padding: 0.25rem;
+    }
+
+    .modal-close:hover {
+      color: white;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      background: linear-gradient(90deg, #fff, var(--text-muted));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+      border: 1px dashed var(--input-border);
+      border-radius: 1rem;
+    }
+
+    .empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
+    }
+
+    .mock-receipt {
+      background: white;
+      color: black;
+      font-family: monospace;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      max-height: 350px;
+      overflow-y: auto;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+      font-size: 0.8rem;
+      border-left: 4px solid var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-container">
+      <div class="logo-badge">S</div>
+      <div class="logo-text">
+        <h1>School Internal Management</h1>
+        <p>Membership & Operations Panel</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-seed" onclick="triggerDbSeed()" id="btn-seed-db">
+        ⚡ Reset & Seed Database
+      </button>
+
+      <button class="btn-seed" onclick="triggerSimulateExpiry()" id="btn-simulate-expiry" style="background:#10b981; display:none;">
+        ⏰ Simulate Expiry Check
+      </button>
+
+      <!-- Notification Center Container -->
+      <div class="notifications-bell-container" id="noti-bell-container" style="display:none; position:relative;">
+        <button class="role-btn" id="noti-bell-btn" onclick="toggleNotiDropdown()" style="position:relative; width:2.5rem; height:2.5rem; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:0; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); cursor:pointer;">
+          🔔
+          <span class="card-badge badge-pending" id="noti-unread-count" style="position:absolute; top:-5px; right:-5px; font-size:0.6rem; padding:0.15rem 0.35rem; border-radius:10px; display:none; background:var(--color-secondary); color:white; font-weight:700;">0</span>
+        </button>
+        
+        <!-- Dropdown Container -->
+        <div class="notifications-dropdown" id="noti-dropdown" style="display:none; position:absolute; top:3rem; right:0; width:320px; background:rgba(30, 41, 59, 0.95); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.15); border-radius:1rem; box-shadow:0 10px 25px -5px rgba(0,0,0,0.5); z-index:100; padding:1rem; max-height:400px; overflow-y:auto;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.5rem;">
+            <strong style="font-size:0.9rem; color:white;">Notifications</strong>
+            <button class="quick-creds-btn" style="padding:0.2rem 0.5rem; font-size:0.7rem;" onclick="markAllNotificationsAsRead()">Mark all read</button>
+          </div>
+          <div id="noti-items-list" class="payments-queue" style="max-height: 280px; overflow-y: auto;">
+            <!-- Notifications will load here -->
+            <div class="empty-state">
+              <div class="empty-icon">🔔</div>
+              <p>You have no notifications.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="role-selector">
+        <button class="role-btn active-student" id="role-student-btn" onclick="switchActiveRole('student')">
+          👤 Student App
+        </button>
+        <button class="role-btn" id="role-cs-btn" onclick="switchActiveRole('cs')">
+          🛡️ CS Portal
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+    <!-- STUDENT APP CONTAINER -->
+    <div class="panel-container active" id="student-panel-container">
+      <!-- Left side: Login or Student Membership Summary -->
+      <div>
+        <!-- Student Login Card (if not logged in) -->
+        <div class="dashboard-card student-card" id="student-login-card">
+          <div class="card-title">Student Authentication</div>
+          <form onsubmit="handleStudentLogin(event)">
+            <div class="form-group">
+              <label for="student-email">Email Address</label>
+              <input type="email" id="student-email" class="input-field" placeholder="student@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="student-password">Password</label>
+              <input type="password" id="student-password" class="input-field" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-submit" id="btn-login-student">Login to Student App</button>
+          </form>
+          <div class="quick-creds">
+            <span>Demo Creds: student@example.com</span>
+            <button class="quick-creds-btn" onclick="quickFillStudent()">Autofill</button>
+          </div>
+        </div>
+
+        <!-- Student Membership Details (if logged in) -->
+        <div class="dashboard-card student-card" id="student-membership-card" style="display:none;">
+          <div class="card-title">
+            <span>Your Membership</span>
+            <span class="card-badge badge-active" id="my-membership-status">Active</span>
+          </div>
+
+          <div class="membership-card">
+            <div class="card-top">
+              <div>
+                <div class="card-holder">Member Name</div>
+                <div class="card-holder-name" id="my-card-name">Student User</div>
+              </div>
+              <div class="card-tier" id="my-card-tier">Basic Plan</div>
+            </div>
+
+            <div class="card-date-grid">
+              <div class="date-item">
+                <h4>Start Date</h4>
+                <p id="my-card-start">Jan 01, 2026</p>
+              </div>
+              <div class="date-item">
+                <h4>Expiration Date</h4>
+                <p id="my-card-end">Feb 01, 2026</p>
+              </div>
+            </div>
+
+            <div class="timer-container">
+              <div class="timer-header">
+                <span>Time Remaining</span>
+                <span class="timer-days" id="my-card-countdown">15 Days Left</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="my-card-progressbar" style="width: 50%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:1rem;">
+            <button class="btn-submit" onclick="openPlansModal()">
+              🔄 Renew / Upgrade Membership
+            </button>
+          </div>
+          
+          <button class="quick-creds-btn" style="width:100%; margin-top:0.5rem; justify-content:center;" onclick="logoutStudent()">
+            Sign Out
+          </button>
+        </div>
+
+        <!-- Student Complaints List Card -->
+        <div class="dashboard-card student-card" id="student-complaints-card" style="display:none; margin-top:2rem;">
+          <div class="card-title">
+            <span>Your Complaints</span>
+            <span class="card-badge badge-active" id="student-complaints-count">0 Filed</span>
+          </div>
+          <div class="payments-queue" id="student-complaints-container">
+            <!-- Dynamic student complaints here -->
+            <div class="empty-state">
+              <div class="empty-icon">📢</div>
+              <p>You have not filed any complaints.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: Actions / Submission flow (only visible when logged in) -->
+      <div>
+        <div class="dashboard-card student-card" id="student-welcome-info">
+          <div class="card-title">Welcome to the Student App</div>
+          <div class="empty-state">
+            <div class="empty-icon">🔐</div>
+            <p>Please authenticate or log in on the left card to access renewal, selection plans, and upload payment proofs.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-card student-card" id="student-renewal-form-card" style="display:none;">
+          <div class="card-title">Submit Membership Renewal</div>
+          
+          <div class="form-group">
+            <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.75rem; display: block;">
+              Step 1: Selected Renewal Plan
+            </label>
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--input-border); padding: 1.25rem; border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 id="selected-plan-title" style="font-size: 1.1rem; font-weight: 700;">Premium Plan</h4>
+                <p id="selected-plan-duration" style="font-size: 0.8rem; color: var(--text-muted);">Duration: 3 Months</p>
+              </div>
+              <div id="selected-plan-price" style="font-size: 1.5rem; font-weight: 800; color: var(--color-secondary)">$120</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem; display: block;">
+              Step 2: Upload Proof of Payment
+            </label>
+            <input type="file" id="proof-file-input" style="display: none;" accept="image/*,application/pdf" onchange="handleFileSelect(event)">
+            
+            <div class="upload-container" onclick="document.getElementById('proof-file-input').click()">
+              <div class="upload-icon">📤</div>
+              <div class="upload-text">Select receipt image or PDF file</div>
+              <div class="upload-subtext">Max size: 5MB (JPG, PNG, PDF)</div>
+            </div>
+
+            <div id="file-selected-info">
+              <span>📄</span>
+              <div id="file-selected-name">proof.png</div>
+              <button class="btn-remove-file" onclick="removeSelectedFile(event)">✕</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <button class="btn-submit" id="btn-submit-renewal" onclick="submitRenewalPayment()">
+              💳 Submit Payment Proof
+            </button>
+          </div>
+        </div>
+
+        <!-- File a Complaint Card -->
+        <div class="dashboard-card student-card" id="student-complaint-form-card" style="display:none; margin-top:2rem;">
+          <div class="card-title">Submit a Complaint</div>
+          <form onsubmit="submitStudentComplaint(event)">
+            <div class="form-group">
+              <label for="complaint-title">Subject / Title</label>
+              <input type="text" id="complaint-title" class="input-field" placeholder="e.g. Broken locker or missing gym equipment" required>
+            </div>
+            <div class="form-group">
+              <label for="complaint-desc">Details / Description</label>
+              <textarea id="complaint-desc" class="input-field" placeholder="Describe the issue in detail..." rows="4" style="resize:none;" required></textarea>
+            </div>
+            <button type="submit" class="btn-submit">
+              📢 Submit Complaint
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- CS / STAFF PANEL CONTAINER -->
+    <div class="panel-container" id="cs-panel-container">
+      <!-- Left side: Login or Agent Profile -->
+      <div>
+        <div class="dashboard-card staff-card" id="cs-login-card">
+          <div class="card-title">Staff Authentication</div>
+          <form onsubmit="handleCSLogin(event)">
+            <div class="form-group">
+              <label for="cs-email">Email Address</label>
+              <input type="email" id="cs-email" class="input-field" placeholder="cs@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="cs-password">Password</label>
+              <input type="password" id="cs-password" class="input-field" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-submit-cs" id="btn-login-cs">Login to Customer Service Portal</button>
+          </form>
+          <div class="quick-creds">
+            <span>Demo Creds: cs@example.com</span>
+            <button class="quick-creds-btn" onclick="quickFillCS()">Autofill</button>
+          </div>
+        </div>
+
+        <div class="dashboard-card staff-card" id="cs-profile-card" style="display:none;">
+          <div class="card-title">
+            <span>CS Agent Profile</span>
+            <span class="card-badge badge-active">CS Role</span>
+          </div>
+          <div class="form-group" style="display:flex; align-items:center; gap: 1rem; margin-bottom:1.5rem;">
+            <div style="background: var(--color-secondary); width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size:1.5rem;">👩‍💻</div>
+            <div>
+              <h4 id="cs-profile-name" style="font-weight:700;">CS Agent</h4>
+              <p id="cs-profile-email" style="font-size:0.8rem; color:var(--text-muted);">cs@example.com</p>
+            </div>
+          </div>
+          <button class="quick-creds-btn" style="width:100%; justify-content:center;" onclick="logoutCS()">
+            Sign Out
+          </button>
+        </div>
+
+        <!-- CS Call Logs Card -->
+        <div class="dashboard-card staff-card" id="cs-call-logs-card" style="display:none; margin-top:2rem;">
+          <div class="card-title">
+            <span>Customer Call Logs</span>
+            <span class="card-badge badge-active" id="cs-call-logs-count">0 Recorded</span>
+          </div>
+
+          <!-- Form to record call log -->
+          <form onsubmit="submitCSCallLog(event)" style="margin-bottom:1.5rem; background:rgba(255,255,255,0.02); padding:1rem; border-radius:0.75rem; border:1px solid rgba(255,255,255,0.05);">
+            <div style="font-weight:700; font-size:0.85rem; margin-bottom:0.75rem; color:var(--text-muted);">Record New Call Log</div>
+            <div class="form-group" style="margin-bottom:0.75rem;">
+              <label for="call-student-select" style="font-size:0.75rem; margin-bottom:0.25rem;">Contact Student</label>
+              <select id="call-student-select" class="input-field" style="padding:0.4rem; font-size:0.8rem; height:auto;" required>
+                <!-- Dynamic student options -->
+              </select>
+            </div>
+            
+            <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+              <div class="form-group" style="flex:1; margin-bottom:0;">
+                <label for="call-duration" style="font-size:0.75rem; margin-bottom:0.25rem;">Duration (sec)</label>
+                <input type="number" id="call-duration" class="input-field" placeholder="120" style="padding:0.4rem; font-size:0.8rem;" required>
+              </div>
+              <div class="form-group" style="flex:1; margin-bottom:0;">
+                <label for="call-result" style="font-size:0.75rem; margin-bottom:0.25rem;">Result Status</label>
+                <select id="call-result" class="input-field" style="padding:0.4rem; font-size:0.8rem; height:auto;" required>
+                  <option value="No Answer">No Answer</option>
+                  <option value="Interested">Interested</option>
+                  <option value="Follow-up">Follow-up</option>
+                  <option value="Joined">Joined</option>
+                  <option value="Upgraded">Upgraded</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0.75rem;">
+              <label for="call-notes" style="font-size:0.75rem; margin-bottom:0.25rem;">Notes</label>
+              <textarea id="call-notes" class="input-field" placeholder="Summarize the call outcome..." rows="2" style="padding:0.4rem; font-size:0.8rem; resize:none;" required></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit-cs" style="font-size:0.8rem; padding:0.5rem;">📞 Save Call Log</button>
+          </form>
+
+          <!-- History Logs list -->
+          <div class="payments-queue" id="cs-call-logs-container" style="max-height: 250px; overflow-y: auto;">
+            <!-- Dynamic call logs here -->
+            <div class="empty-state">
+              <div class="empty-icon">📞</div>
+              <p>No call logs recorded yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: Review Queue -->
+      <div>
+        <div class="dashboard-card staff-card" id="cs-welcome-info">
+          <div class="card-title">Welcome to Customer Service Portal</div>
+          <div class="empty-state">
+            <div class="empty-icon">🔑</div>
+            <p>Please authenticate or log in on the left card to view the pending payments review queue.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-card staff-card" id="cs-queue-card" style="display:none;">
+          <div class="card-title">
+            <span>Pending Payment Reviews</span>
+            <span class="card-badge badge-pending" id="pending-reviews-count">0 Pending</span>
+          </div>
+
+          <div class="payments-queue" id="payments-queue-container">
+            <!-- Dynamic payments here -->
+            <div class="empty-state">
+              <div class="empty-icon">🎉</div>
+              <p>All clean! There are no pending payments to review.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reminder Jobs Queue Card -->
+        <div class="dashboard-card staff-card" id="cs-reminder-jobs-card" style="display:none; margin-top:2rem;">
+          <div class="card-title">
+            <span>Scheduled Expiry Reminder Jobs</span>
+            <span class="card-badge badge-active" id="reminder-jobs-count">0 Jobs</span>
+          </div>
+
+          <div class="payments-queue" id="reminder-jobs-container">
+            <!-- Dynamic reminder jobs here -->
+            <div class="empty-state">
+              <div class="empty-icon">⏰</div>
+              <p>No reminder jobs scheduled.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CS Complaints Management Card -->
+        <div class="dashboard-card staff-card" id="cs-complaints-card" style="display:none; margin-top:2rem;">
+          <div class="card-title">
+            <span>Complaints Management</span>
+            <span class="card-badge badge-pending" id="staff-complaints-count">0 Active</span>
+          </div>
+          <div class="payments-queue" id="staff-complaints-container">
+            <!-- Dynamic staff complaints list -->
+            <div class="empty-state">
+              <div class="empty-icon">📢</div>
+              <p>No complaints in the system.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: SELECT MEMBERSHIP PLANS -->
+  <div class="modal-overlay" id="plans-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closePlansModal()">✕</button>
+      <div class="modal-title">Select Membership Plan</div>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+        Choose the plan that suits you best. Your current membership will be extended by the duration of the chosen plan.
+      </p>
+
+      <div class="plans-grid" id="plans-selection-grid">
+        <!-- Dynamic plans option cards -->
+        <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Loading plans...</div>
+      </div>
+
+      <div style="display:flex; justify-content: flex-end; gap: 1rem;">
+        <button class="quick-creds-btn" onclick="closePlansModal()">Cancel</button>
+        <button class="btn-submit" style="width:auto; padding: 0.625rem 1.5rem;" onclick="confirmPlanSelection()">
+          Continue to Payment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PROOF OF PAYMENT PREVIEW -->
+  <div class="modal-overlay" id="proof-modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="modal-close" onclick="closeProofModal()">✕</button>
+      <div class="modal-title">Proof of Payment File</div>
+      
+      <div style="margin-bottom: 1.5rem;" id="proof-preview-container">
+        <!-- Receipt simulation -->
+        <div class="mock-receipt">
+          ---------------------------------------<br>
+          *** MOCK TRANSACTION RECEIPT ***<br>
+          ---------------------------------------<br>
+          DATE: 2026-07-16 04:55:00<br>
+          PLAN: Premium Membership<br>
+          AMOUNT: $120.00<br>
+          STATUS: PAID SUCCESSFUL<br>
+          REFERENCE: TXN-128471928472<br>
+          ---------------------------------------<br>
+          Thank you for choosing School Management!
+        </div>
+      </div>
+
+      <button class="btn-submit-cs" style="width:100%;" onclick="closeProofModal()">
+        Done Reviewing
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Toast -->
+  <div id="toast-container"></div>
+
+  <script>
+    // State Store
+    const state = {
+      currentRole: 'student',
+      studentToken: localStorage.getItem('student_token'),
+      csToken: localStorage.getItem('cs_token'),
+      plans: [],
+      selectedPlanId: null,
+      selectedFile: null,
+      payments: [],
+      studentMembership: null,
+      studentProfile: null
+    };
+
+    // Initialize App
+    window.addEventListener('DOMContentLoaded', () => {
+      // Set initial buttons state
+      switchActiveRole(state.currentRole);
+      
+      // Load Initial Authentication Screens
+      checkStoredAuth();
+    });
+
+    // Toggle Role Selector Panel
+    function switchActiveRole(role) {
+      state.currentRole = role;
+      
+      const studentBtn = document.getElementById('role-student-btn');
+      const csBtn = document.getElementById('role-cs-btn');
+      const studentPanel = document.getElementById('student-panel-container');
+      const csPanel = document.getElementById('cs-panel-container');
+      
+      if (role === 'student') {
+        studentBtn.className = 'role-btn active-student';
+        csBtn.className = 'role-btn';
+        studentPanel.className = 'panel-container active';
+        csPanel.className = 'panel-container';
+        
+        if (state.studentToken) {
+          loadPlans();
+          loadStudentMembership();
+          loadStudentComplaints();
+        }
+        document.getElementById('btn-simulate-expiry').style.display = 'none';
+      } else {
+        studentBtn.className = 'role-btn';
+        csBtn.className = 'role-btn active-cs';
+        studentPanel.className = 'panel-container';
+        csPanel.className = 'panel-container active';
+        
+        if (state.csToken) {
+          loadPaymentsQueue();
+        }
+        if (state.csToken) {
+          document.getElementById('btn-simulate-expiry').style.display = 'block';
+        }
+      }
+      
+      // Close dropdown and refresh counts
+      document.getElementById('noti-dropdown').style.display = 'none';
+      if (state.studentToken || state.csToken) {
+        loadNotifications();
+      }
+    }
+
+    // Quick fill credentials helpers
+    function quickFillStudent() {
+      document.getElementById('student-email').value = 'student@example.com';
+      document.getElementById('student-password').value = 'password123';
+    }
+
+    // Direct Quick fill for CS Agent
+    function quickFillCS() {
+      document.getElementById('cs-email').value = 'cs@example.com';
+      document.getElementById('cs-password').value = 'password123';
+    }
+
+    // Check localStorage authentication
+    function checkStoredAuth() {
+      // Student Checks
+      if (state.studentToken) {
+        document.getElementById('student-login-card').style.display = 'none';
+        document.getElementById('student-membership-card').style.display = 'block';
+        document.getElementById('student-complaints-card').style.display = 'block';
+        document.getElementById('student-complaint-form-card').style.display = 'block';
+        document.getElementById('student-welcome-info').style.display = 'none';
+        
+        if (state.currentRole === 'student') {
+          loadPlans();
+          loadStudentMembership();
+          loadStudentComplaints();
+        }
+      } else {
+        document.getElementById('student-login-card').style.display = 'block';
+        document.getElementById('student-membership-card').style.display = 'none';
+        document.getElementById('student-complaints-card').style.display = 'none';
+        document.getElementById('student-complaint-form-card').style.display = 'none';
+        document.getElementById('student-welcome-info').style.display = 'block';
+        document.getElementById('student-renewal-form-card').style.display = 'none';
+      }
+
+      // Staff CS Checks
+      if (state.csToken) {
+        document.getElementById('cs-login-card').style.display = 'none';
+        document.getElementById('cs-profile-card').style.display = 'block';
+        document.getElementById('cs-call-logs-card').style.display = 'block';
+        document.getElementById('cs-welcome-info').style.display = 'none';
+        document.getElementById('cs-queue-card').style.display = 'block';
+        document.getElementById('cs-reminder-jobs-card').style.display = 'block';
+        document.getElementById('cs-complaints-card').style.display = 'block';
+        
+        if (state.currentRole === 'cs') {
+          loadPaymentsQueue();
+        }
+      } else {
+        document.getElementById('cs-login-card').style.display = 'block';
+        document.getElementById('cs-profile-card').style.display = 'none';
+        document.getElementById('cs-call-logs-card').style.display = 'none';
+        document.getElementById('cs-welcome-info').style.display = 'block';
+        document.getElementById('cs-queue-card').style.display = 'none';
+        document.getElementById('cs-reminder-jobs-card').style.display = 'none';
+        document.getElementById('cs-complaints-card').style.display = 'none';
+      }
+
+      // Show/Hide global Notification Bell
+      if (state.studentToken || state.csToken) {
+        document.getElementById('noti-bell-container').style.display = 'block';
+        loadNotifications();
+      } else {
+        document.getElementById('noti-bell-container').style.display = 'none';
+        document.getElementById('noti-dropdown').style.display = 'none';
+      }
+
+      // Show/Hide CS Simulator Button
+      if (state.csToken && state.currentRole === 'cs') {
+        document.getElementById('btn-simulate-expiry').style.display = 'block';
+      } else {
+        document.getElementById('btn-simulate-expiry').style.display = 'none';
+      }
+    }
+
+    // Core Fetch API Helper
+    async function apiRequest(endpoint, method = 'GET', body = null, isMultipart = false) {
+      const token = state.currentRole === 'student' ? state.studentToken : state.csToken;
+      const headers = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      if (!isMultipart && body) {
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const options = {
+        method,
+        headers,
+      };
+
+      if (body) {
+        options.body = isMultipart ? body : JSON.stringify(body);
+      }
+
+      try {
+        const response = await fetch(endpoint, options);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || 'Request failed!');
+        }
+        return data;
+      } catch (err) {
+        showToast(err.message, 'error');
+        throw err;
+      }
+    }
+
+    // Trigger Database Reset & Seeding
+    async function triggerDbSeed() {
+      const btn = document.getElementById('btn-seed-db');
+      btn.innerText = '⚡ Seeding Database...';
+      btn.disabled = true;
+
+      try {
+        const res = await apiRequest('/api/v1/auth/seed', 'POST');
+        showToast('Database Seeded Successfully!', 'success');
+        
+        // Log out users to force fresh session on new database
+        logoutStudent();
+        logoutCS();
+        
+        // Auto fill email inputs with seeded creds
+        quickFillStudent();
+        quickFillCS();
+      } catch (err) {
+        showToast('Failed to seed database: ' + err.message, 'error');
+      } finally {
+        btn.innerText = '⚡ Reset & Seed Database';
+        btn.disabled = false;
+      }
+    }
+
+    // Student Login
+    async function handleStudentLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('student-email').value;
+      const password = document.getElementById('student-password').value;
+
+      try {
+        const res = await apiRequest('/api/v1/auth/login', 'POST', { email, password });
+        state.studentToken = res.accessToken;
+        localStorage.setItem('student_token', res.accessToken);
+        
+        showToast(`Welcome back, ${res.data.user.name}!`, 'success');
+        checkStoredAuth();
+      } catch (err) {
+        // Handled in apiRequest toast
+      }
+    }
+
+    // Sign out student
+    function logoutStudent() {
+      state.studentToken = null;
+      localStorage.removeItem('student_token');
+      state.studentMembership = null;
+      state.studentProfile = null;
+      state.selectedPlanId = null;
+      checkStoredAuth();
+    }
+
+    // CS Login
+    async function handleCSLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('cs-email').value;
+      const password = document.getElementById('cs-password').value;
+
+      try {
+        const res = await apiRequest('/api/v1/auth/login', 'POST', { email, password });
+        if (res.data.user.role !== 'CustomerService' && res.data.user.role !== 'Admin' && res.data.user.role !== 'CEO') {
+          throw new Error('Access denied: You must be a CS agent or Admin.');
+        }
+
+        state.csToken = res.accessToken;
+        localStorage.setItem('cs_token', res.accessToken);
+        
+        document.getElementById('cs-profile-name').innerText = res.data.user.name;
+        document.getElementById('cs-profile-email').innerText = res.data.user.email;
+        
+        showToast(`Agent Portal Active: ${res.data.user.name}`, 'success');
+        checkStoredAuth();
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    // Sign out CS agent
+    function logoutCS() {
+      state.csToken = null;
+      localStorage.removeItem('cs_token');
+      checkStoredAuth();
+    }
+
+    // Load available plans
+    async function loadPlans() {
+      try {
+        const res = await apiRequest('/api/v1/membership-plans');
+        state.plans = res.data.plans;
+        renderPlansModalGrid();
+      } catch (err) {
+        console.error('Error loading plans', err);
+      }
+    }
+
+    // Load Student Profile & Membership Details
+    async function loadStudentMembership() {
+      try {
+        const res = await apiRequest('/api/v1/memberships');
+        if (res.results > 0) {
+          // Show the latest membership
+          const membership = res.data.memberships[0];
+          state.studentMembership = membership;
+          renderMembershipCard(membership);
+        } else {
+          // No memberships found
+          document.getElementById('my-membership-status').className = 'card-badge badge-expired';
+          document.getElementById('my-membership-status').innerText = 'None';
+          document.getElementById('my-card-tier').innerText = 'No Plan';
+          document.getElementById('my-card-start').innerText = 'N/A';
+          document.getElementById('my-card-end').innerText = 'N/A';
+          document.getElementById('my-card-countdown').innerText = 'Expired/Inactive';
+          document.getElementById('my-card-progressbar').style.width = '0%';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Render Student Membership Card details and countdown
+    function renderMembershipCard(membership) {
+      document.getElementById('my-card-name').innerText = membership.student ? membership.student.name : 'Student User';
+      document.getElementById('my-card-tier').innerText = membership.plan ? `${membership.plan.name} Plan` : 'Basic Plan';
+      
+      const start = new Date(membership.startDate);
+      const end = new Date(membership.endDate);
+      
+      document.getElementById('my-card-start').innerText = start.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+      document.getElementById('my-card-end').innerText = end.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+      
+      // Calculate Countdown Days
+      const today = new Date();
+      const diffTime = end - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      const statusBadge = document.getElementById('my-membership-status');
+      const countdownText = document.getElementById('my-card-countdown');
+      const progressBar = document.getElementById('my-card-progressbar');
+      
+      if (diffDays <= 0) {
+        statusBadge.className = 'card-badge badge-expired';
+        statusBadge.innerText = 'Expired';
+        countdownText.innerText = 'Expired';
+        progressBar.style.width = '0%';
+        countdownText.style.color = 'var(--color-rose)';
+      } else if (diffDays <= 7) {
+        statusBadge.className = 'card-badge badge-expiring';
+        statusBadge.innerText = 'Expiring';
+        countdownText.innerText = `${diffDays} Days Left`;
+        progressBar.style.width = `${(diffDays / 30) * 100}%`;
+        countdownText.style.color = 'var(--color-amber)';
+      } else {
+        statusBadge.className = 'card-badge badge-active';
+        statusBadge.innerText = 'Active';
+        countdownText.innerText = `${diffDays} Days Left`;
+        
+        // Mock progress ratio calculation (assuming max 30 days standard basic, capped at 100%)
+        const progressPct = Math.min(100, (diffDays / (membership.plan ? membership.plan.duration * 30 : 30)) * 100);
+        progressBar.style.width = `${progressPct}%`;
+        countdownText.style.color = 'var(--color-emerald)';
+      }
+    }
+
+    // Modal Control Open
+    function openPlansModal() {
+      document.getElementById('plans-modal').style.display = 'flex';
+      // Automatically select Basic or current selection
+      if (state.plans.length > 0 && !state.selectedPlanId) {
+        selectPlanOption(state.plans[0]._id);
+      }
+    }
+
+    // Modal Control Close
+    function closePlansModal() {
+      document.getElementById('plans-modal').style.display = 'none';
+    }
+
+    // Render membership options inside Modal
+    function renderPlansModalGrid() {
+      const container = document.getElementById('plans-selection-grid');
+      container.innerHTML = '';
+
+      if (state.plans.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No plans configured. Seed the DB.</div>';
+        return;
+      }
+
+      state.plans.forEach(plan => {
+        const card = document.createElement('div');
+        card.className = `plan-option-card ${state.selectedPlanId === plan._id ? 'selected' : ''}`;
+        card.onclick = () => selectPlanOption(plan._id);
+        
+        const featuresHtml = plan.features.map(f => `<li>${f}</li>`).join('');
+
+        card.innerHTML = `
+          <div class="plan-name">${plan.name}</div>
+          <div class="plan-price">$${plan.price} <span>/ ${plan.duration} Month${plan.duration > 1 ? 's' : ''}</span></div>
+          <ul class="plan-features-list">
+            ${featuresHtml}
+          </ul>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Handle plan card selection click
+    function selectPlanOption(planId) {
+      state.selectedPlanId = planId;
+      renderPlansModalGrid();
+    }
+
+    // Confirm Plan selection and go to upload page
+    function confirmPlanSelection() {
+      closePlansModal();
+      
+      const plan = state.plans.find(p => p._id === state.selectedPlanId);
+      if (!plan) return;
+
+      document.getElementById('selected-plan-title').innerText = `${plan.name} Plan`;
+      document.getElementById('selected-plan-duration').innerText = `Duration: ${plan.duration} Month${plan.duration > 1 ? 's' : ''}`;
+      document.getElementById('selected-plan-price').innerText = `$${plan.price}`;
+
+      document.getElementById('student-renewal-form-card').style.display = 'block';
+      document.getElementById('student-renewal-form-card').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // File Upload Inputs handlers
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      state.selectedFile = file;
+      document.getElementById('file-selected-name').innerText = file.name;
+      document.getElementById('file-selected-info').style.display = 'flex';
+    }
+
+    // Remove selected file helper
+    function removeSelectedFile(e) {
+      if(e && e.stopPropagation) e.stopPropagation();
+      state.selectedFile = null;
+      document.getElementById('proof-file-input').value = '';
+      document.getElementById('file-selected-info').style.display = 'none';
+    }
+
+    // Submit Payment proof Form
+    async function submitRenewalPayment() {
+      if (!state.selectedPlanId) {
+        showToast('Please select a membership plan first', 'error');
+        return;
+      }
+
+      if (!state.selectedFile) {
+        // Create a mock proof of payment file if they didn't upload one
+        // to make testing extremely easy!
+        const blob = new Blob(["MOCK TRANSACTION RECEIPT\nAMOUNT: $120\nREF: TXN-5551212"], { type: "text/plain" });
+        state.selectedFile = new File([blob], "mock-proof.txt", { type: "text/plain" });
+      }
+
+      const formData = new FormData();
+      formData.append('membershipPlanId', state.selectedPlanId);
+      formData.append('proof', state.selectedFile);
+
+      const btn = document.getElementById('btn-submit-renewal');
+      btn.innerText = 'Uploading...';
+      btn.disabled = true;
+
+      try {
+        const res = await apiRequest('/api/v1/payments/upload-proof', 'POST', formData, true);
+        showToast('Payment proof submitted successfully! Pending approval.', 'success');
+        
+        // Reset file upload form
+        removeSelectedFile(null);
+        document.getElementById('student-renewal-form-card').style.display = 'none';
+        
+        // Auto refresh staff review queue if they run both
+        if (state.csToken) {
+          loadPaymentsQueue();
+        }
+      } catch (err) {
+        // Handled
+      } finally {
+        btn.innerText = '💳 Submit Payment Proof';
+        btn.disabled = false;
+      }
+    }
+
+    // Staff/Agent: Load payment review queue
+    async function loadPaymentsQueue() {
+      if (!state.csToken) return;
+
+      try {
+        const res = await apiRequest('/api/v1/payments');
+        state.payments = res.data.payments;
+        renderPaymentsQueue();
+        await loadReminderJobs();
+        await loadStaffUsers();
+        await loadCSComplaints();
+        await loadCSStudentsDropdown();
+        await loadCallLogs();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Staff/Agent: Load reminder jobs queue
+    async function loadReminderJobs() {
+      if (!state.csToken) return;
+
+      try {
+        const res = await apiRequest('/api/v1/memberships/reminder-jobs');
+        renderReminderJobs(res.data.reminderJobs);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Render reminder jobs list on CS Portal
+    function renderReminderJobs(jobs) {
+      const container = document.getElementById('reminder-jobs-container');
+      const counterBadge = document.getElementById('reminder-jobs-count');
+      
+      counterBadge.innerText = `${jobs.length} Job${jobs.length !== 1 ? 's' : ''}`;
+
+      if (jobs.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⏰</div>
+            <p>No reminder jobs scheduled.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      jobs.forEach(job => {
+        const item = document.createElement('div');
+        item.className = 'queue-item';
+        
+        const studentName = job.student ? job.student.name : 'Unknown Student';
+        const studentEmail = job.student ? job.student.email : 'N/A';
+        const planName = (job.membership && job.membership.plan) ? job.membership.plan.name : 'Basic';
+        const targetDate = new Date(job.reminderDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+
+        let badgeClass = 'badge-pending';
+        if (job.status === 'Sent') badgeClass = 'badge-active';
+        if (job.status === 'Failed') badgeClass = 'badge-expired';
+
+        item.innerHTML = `
+          <div class="queue-header" style="margin-bottom:0.5rem;">
+            <div class="student-info">
+              <h4 style="font-size:0.9rem;">${studentName} (Plan: ${planName})</h4>
+              <p style="font-size:0.75rem;">Email: ${studentEmail}</p>
+            </div>
+            <span class="card-badge ${badgeClass}" style="font-size:0.65rem;">${job.status}</span>
+          </div>
+          <div style="font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; color:var(--text-muted);">
+            <span>Target Send Date:</span>
+            <span style="font-weight:600; color:white;">${targetDate}</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Render review items on CS Portal
+    function renderPaymentsQueue() {
+      const container = document.getElementById('payments-queue-container');
+      const counterBadge = document.getElementById('pending-reviews-count');
+      
+      const pendingPayments = state.payments.filter(p => p.status === 'Pending');
+      counterBadge.innerText = `${pendingPayments.length} Pending`;
+
+      if (pendingPayments.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🎉</div>
+            <p>All clean! There are no pending payments to review.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      pendingPayments.forEach(payment => {
+        const item = document.createElement('div');
+        item.className = 'queue-item';
+
+        const planName = payment.membershipPlan ? payment.membershipPlan.name : 'Unknown Plan';
+        const planDur = payment.membershipPlan ? payment.membershipPlan.duration : 1;
+        const studentName = payment.student ? payment.student.name : 'Student User';
+
+        // Check if proof file is pdf or img, simulate download/view
+        const pathSuffix = payment.proofOfPayment;
+
+        item.innerHTML = `
+          <div class="queue-header">
+            <div class="student-info">
+              <h4>${studentName}</h4>
+              <p>${payment.studentEmail}</p>
+            </div>
+            <span class="card-badge badge-pending">Pending</span>
+          </div>
+
+          <div class="queue-details">
+            <div class="detail-col">
+              <span>Selected Plan</span>
+              <p>${planName}</p>
+            </div>
+            <div class="detail-col">
+              <span>Amount Due</span>
+              <p>$${payment.amount}</p>
+            </div>
+            <div class="detail-col">
+              <span>Proof File</span>
+              <p><a href="#" class="proof-link" onclick="openProofModal('${escapeHtml(pathSuffix)}')">🔍 View Proof</a></p>
+            </div>
+          </div>
+
+          <div class="queue-actions">
+            <button class="btn-approve" onclick="triggerApprovePayment('${payment._id}')">Approve</button>
+            <button class="btn-reject" onclick="triggerRejectPayment('${payment._id}')">Reject</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Approve Payment Action
+    async function triggerApprovePayment(paymentId) {
+      try {
+        const res = await apiRequest(`/api/v1/payments/${paymentId}/approve`, 'PUT');
+        
+        const isRenewal = res.data.isRenewal;
+        const expiryDate = new Date(res.data.expiryDate);
+        
+        if (isRenewal) {
+          showToast(`Renewal Extended! New expiry: ${expiryDate.toDateString()}`, 'success');
+        } else {
+          showToast(`Payment Approved! Membership Active until ${expiryDate.toDateString()}`, 'success');
+        }
+        
+        // Reload queues & data
+        loadPaymentsQueue();
+        if (state.studentToken) {
+          loadStudentMembership();
+        }
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    // Reject Payment Action
+    async function triggerRejectPayment(paymentId) {
+      if (!confirm('Are you sure you want to reject this payment receipt?')) return;
+      try {
+        await apiRequest(`/api/v1/payments/${paymentId}/reject`, 'PUT');
+        showToast('Payment rejected and student notified.', 'info');
+        loadPaymentsQueue();
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    // View proof modal simulation
+    function openProofModal(filePath) {
+      document.getElementById('proof-modal').style.display = 'flex';
+      const container = document.getElementById('proof-preview-container');
+      
+      // Let's generate a mockup transaction slip visually
+      container.innerHTML = `
+        <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.75rem;">
+          File Path on Server: <code>${filePath}</code>
+        </div>
+        <div class="mock-receipt">
+          --------------------------------------------<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** BANK TRANSACTION RECEIPT ***<br>
+          --------------------------------------------<br>
+          STATUS: SUCCESSFUL / POSTED<br>
+          TRANSACTION TYPE: NET BANKING TRANSFER<br>
+          BENEFICIARY: School Internal Management Corp<br>
+          ACCOUNT: ************8841<br>
+          SENDER EMAIL: student@example.com<br>
+          TRANS DATE: ${new Date().toLocaleString()}<br>
+          REFERENCE NO: TXN-${Math.floor(Math.random() * 9000000000 + 1000000000)}<br>
+          ATTACHMENT: Uploaded file verification OK<br>
+          --------------------------------------------<br>
+          Payment successfully debited from sender.<br>
+          Authentication code: SIMS-OK-98471<br>
+          --------------------------------------------
+        </div>
+      `;
+    }
+
+    function closeProofModal() {
+      document.getElementById('proof-modal').style.display = 'none';
+    }
+
+    // Utility Toasts Alerts
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let className = 'toast';
+      let icon = 'ℹ️';
+      if (type === 'success') {
+        className += ' toast-success';
+        icon = '✨';
+      } else if (type === 'error') {
+        className += ' toast-error';
+        icon = '⚠️';
+      } else if (type === 'info') {
+        className += ' toast-info';
+        icon = '🔔';
+      }
+
+      toast.className = className;
+      toast.innerHTML = `
+        <span>${icon}</span>
+        <div>${message}</div>
+      `;
+
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 4500);
+    }
+
+    // Fetch and display student complaints
+    async function loadStudentComplaints() {
+      if (!state.studentToken) return;
+      try {
+        const res = await apiRequest('/api/v1/complaints');
+        renderStudentComplaints(res.data.complaints);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Render Student Complaints
+    function renderStudentComplaints(complaints) {
+      const container = document.getElementById('student-complaints-container');
+      const counterBadge = document.getElementById('student-complaints-count');
+      counterBadge.innerText = `${complaints.length} Filed`;
+
+      if (complaints.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📢</div>
+            <p>You have not filed any complaints.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      complaints.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'queue-item';
+
+        let badgeClass = 'badge-pending';
+        if (c.status === 'Solved') badgeClass = 'badge-active';
+        if (c.status === 'Closed') badgeClass = 'badge-expired';
+        if (c.status === 'UnderReview') badgeClass = 'badge-pending';
+
+        const assignedName = c.assignedStaff ? c.assignedStaff.name : 'Not Assigned Yet';
+        const resolutionHtml = c.resolution 
+          ? `<div style="background:rgba(255,255,255,0.03); padding:0.5rem; border-radius:0.5rem; margin-top:0.5rem; font-size:0.8rem; border-left:3px solid var(--color-emerald);">
+               <strong>Resolution:</strong> ${escapeHtml(c.resolution)}
+             </div>`
+          : '';
+
+        const closeBtnHtml = c.status === 'Solved'
+          ? `<button class="btn-submit" style="margin-top:0.75rem; padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="closeStudentComplaint('${c._id}')">Close Complaint</button>`
+          : '';
+
+        item.innerHTML = `
+          <div class="queue-header" style="margin-bottom:0.5rem;">
+            <div>
+              <h4 style="font-size:0.95rem;">${escapeHtml(c.title)}</h4>
+              <p style="font-size:0.75rem; color:var(--text-muted);">Filed: ${new Date(c.createdAt).toLocaleDateString()}</p>
+            </div>
+            <span class="card-badge ${badgeClass}" style="font-size:0.7rem;">${c.status}</span>
+          </div>
+          <p style="font-size:0.85rem; margin-bottom:0.5rem; color:var(--text-main);">${escapeHtml(c.description)}</p>
+          <div style="font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+            <span>Assigned Agent:</span>
+            <strong>${escapeHtml(assignedName)}</strong>
+          </div>
+          ${resolutionHtml}
+          ${closeBtnHtml}
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Submit new complaint
+    async function submitStudentComplaint(e) {
+      e.preventDefault();
+      const title = document.getElementById('complaint-title').value;
+      const description = document.getElementById('complaint-desc').value;
+
+      try {
+        await apiRequest('/api/v1/complaints', 'POST', { title, description });
+        showToast('Complaint submitted successfully!', 'success');
+        document.getElementById('complaint-title').value = '';
+        document.getElementById('complaint-desc').value = '';
+        
+        loadStudentComplaints();
+        if (state.csToken) {
+          loadCSComplaints();
+        }
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    // Close complaint as Student
+    async function closeStudentComplaint(complaintId) {
+      try {
+        await apiRequest(`/api/v1/complaints/${complaintId}/close`, 'PUT');
+        showToast('Complaint marked as Closed!', 'info');
+        loadStudentComplaints();
+        if (state.csToken) {
+          loadCSComplaints();
+        }
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    // CS Portal logic
+    async function loadCSComplaints() {
+      if (!state.csToken) return;
+      try {
+        const res = await apiRequest('/api/v1/complaints');
+        renderCSComplaints(res.data.complaints);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Load available staff users for dropdown
+    state.staffUsers = [];
+    async function loadStaffUsers() {
+      if (!state.csToken) return;
+      try {
+        const res = await apiRequest('/api/v1/users');
+        // Filter users that have role CS, Admin, CEO
+        state.staffUsers = res.data.users.filter(u => ['CustomerService', 'Admin', 'CEO'].includes(u.role));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderCSComplaints(complaints) {
+      const container = document.getElementById('staff-complaints-container');
+      const counterBadge = document.getElementById('staff-complaints-count');
+      
+      const activeComplaints = complaints.filter(c => c.status !== 'Closed');
+      counterBadge.innerText = `${activeComplaints.length} Active`;
+
+      if (complaints.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📢</div>
+            <p>No complaints in the system.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      complaints.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'queue-item';
+
+        let badgeClass = 'badge-pending';
+        if (c.status === 'Solved') badgeClass = 'badge-active';
+        if (c.status === 'Closed') badgeClass = 'badge-expired';
+
+        const studentName = c.student ? c.student.name : 'Unknown Student';
+        const studentEmail = c.student ? c.student.email : 'N/A';
+
+        // Render controller actions depending on current status
+        let actionHtml = '';
+
+        if (c.status === 'Created') {
+          // Dropdown to assign staff
+          const optionsHtml = state.staffUsers.map(u => `<option value="${u._id}">${u.name} (${u.role})</option>`).join('');
+          actionHtml = `
+            <div style="margin-top:0.75rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.75rem;">
+              <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Assign Staff Member:</label>
+              <div style="display:flex; gap:0.5rem;">
+                <select id="assign-select-${c._id}" class="input-field" style="padding:0.4rem; font-size:0.8rem; height:auto;">
+                  ${optionsHtml}
+                </select>
+                <button class="btn-submit-cs" style="width:auto; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="assignComplaintStaff('${c._id}')">Assign</button>
+              </div>
+            </div>
+          `;
+        } else if (c.status === 'Assigned') {
+          actionHtml = `
+            <div style="margin-top:0.75rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.75rem;">
+              <button class="btn-submit-cs" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="startComplaintReview('${c._id}')">🔎 Start Investigation / Review</button>
+            </div>
+          `;
+        } else if (c.status === 'UnderReview') {
+          actionHtml = `
+            <div style="margin-top:0.75rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.75rem;">
+              <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Resolution Details:</label>
+              <textarea id="resolution-text-${c._id}" class="input-field" placeholder="Provide resolution information..." style="padding:0.4rem; font-size:0.8rem; resize:none;" rows="2"></textarea>
+              <button class="btn-submit-cs" style="margin-top:0.5rem; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="solveComplaintCS('${c._id}')">✔️ Solve Complaint</button>
+            </div>
+          `;
+        } else if (c.status === 'Solved') {
+          actionHtml = `
+            <div style="margin-top:0.75rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem;">
+              <div style="font-size:0.8rem; color:var(--text-muted);">
+                <strong>Resolution:</strong> ${escapeHtml(c.resolution)}
+              </div>
+              <button class="btn-submit" style="background:#0284c7; padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="closeComplaintCS('${c._id}')">🔒 Close Complaint</button>
+            </div>
+          `;
+        } else if (c.status === 'Closed') {
+          actionHtml = `
+            <div style="margin-top:0.75rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:0.75rem; font-size:0.8rem; color:var(--text-muted);">
+              <strong>Resolved:</strong> ${escapeHtml(c.resolution)}
+            </div>
+          `;
+        }
+
+        const assignedName = c.assignedStaff ? c.assignedStaff.name : 'Unassigned';
+
+        item.innerHTML = `
+          <div class="queue-header" style="margin-bottom:0.5rem;">
+            <div>
+              <h4 style="font-size:0.95rem;">${escapeHtml(c.title)}</h4>
+              <p style="font-size:0.75rem; color:var(--text-muted);">By: ${escapeHtml(studentName)} (${escapeHtml(studentEmail)})</p>
+            </div>
+            <span class="card-badge ${badgeClass}" style="font-size:0.65rem;">${c.status}</span>
+          </div>
+          <p style="font-size:0.85rem; margin-bottom:0.5rem; color:var(--text-main);">${escapeHtml(c.description)}</p>
+          <div style="font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+            <span>Assigned Agent:</span>
+            <strong>${escapeHtml(assignedName)}</strong>
+          </div>
+          ${actionHtml}
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // CS actions triggers
+    async function assignComplaintStaff(complaintId) {
+      const select = document.getElementById(`assign-select-${complaintId}`);
+      const staffId = select.value;
+      if(!staffId) {
+        showToast('Please select a staff member', 'error');
+        return;
+      }
+      try {
+        await apiRequest(`/api/v1/complaints/${complaintId}/assign`, 'PUT', { staffId });
+        showToast('Staff assigned to complaint!', 'success');
+        loadCSComplaints();
+        if (state.studentToken) {
+          loadStudentComplaints();
+        }
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    async function startComplaintReview(complaintId) {
+      try {
+        await apiRequest(`/api/v1/complaints/${complaintId}/review`, 'PUT');
+        showToast('Complaint placed under review!', 'info');
+        loadCSComplaints();
+        if (state.studentToken) {
+          loadStudentComplaints();
+        }
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    async function solveComplaintCS(complaintId) {
+      const textarea = document.getElementById(`resolution-text-${complaintId}`);
+      const resolution = textarea.value;
+      if (!resolution) {
+        showToast('Please enter resolution details', 'error');
+        return;
+      }
+      try {
+        await apiRequest(`/api/v1/complaints/${complaintId}/solve`, 'PUT', { resolution });
+        showToast('Complaint solved!', 'success');
+        loadCSComplaints();
+        if (state.studentToken) {
+          loadStudentComplaints();
+        }
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    async function closeComplaintCS(complaintId) {
+      try {
+        await apiRequest(`/api/v1/complaints/${complaintId}/close`, 'PUT');
+        showToast('Complaint closed!', 'info');
+        loadCSComplaints();
+        if (state.studentToken) {
+          loadStudentComplaints();
+        }
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    // Fetch students list for Call Logs dropdown
+    async function loadCSStudentsDropdown() {
+      if (!state.csToken) return;
+      try {
+        const res = await apiRequest('/api/v1/students');
+        state.studentsList = res.data.students;
+        
+        const select = document.getElementById('call-student-select');
+        if (select) {
+          select.innerHTML = state.studentsList.map(s => `<option value="${s._id}">${s.name} (${s.email})</option>`).join('');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Fetch and display call logs
+    async function loadCallLogs() {
+      if (!state.csToken) return;
+      try {
+        const res = await apiRequest('/api/v1/call-logs');
+        renderCallLogs(res.data.callLogs);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Render Call Logs
+    function renderCallLogs(logs) {
+      const container = document.getElementById('cs-call-logs-container');
+      const counterBadge = document.getElementById('cs-call-logs-count');
+      counterBadge.innerText = `${logs.length} Recorded`;
+
+      if (logs.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📞</div>
+            <p>No call logs recorded yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      logs.forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'queue-item';
+
+        const studentName = log.student ? log.student.name : 'Unknown Student';
+        const agentName = log.agent ? log.agent.name : 'Unknown Agent';
+        const dateStr = new Date(log.date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'});
+
+        let badgeClass = 'badge-pending';
+        if (['Joined', 'Upgraded'].includes(log.result)) badgeClass = 'badge-active';
+        if (log.result === 'No Answer') badgeClass = 'badge-expired';
+        if (log.result === 'Interested') badgeClass = 'badge-active';
+
+        item.innerHTML = `
+          <div class="queue-header" style="margin-bottom:0.25rem;">
+            <div>
+              <h4 style="font-size:0.85rem; font-weight:700;">To: ${escapeHtml(studentName)}</h4>
+              <p style="font-size:0.7rem; color:var(--text-muted);">${dateStr}</p>
+            </div>
+            <span class="card-badge ${badgeClass}" style="font-size:0.6rem; padding: 0.15rem 0.4rem;">${log.result}</span>
+          </div>
+          <p style="font-size:0.75rem; margin-bottom:0.25rem; color:var(--text-main); line-height:1.2;">${escapeHtml(log.notes)}</p>
+          <div style="font-size:0.65rem; color:var(--text-muted); display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.03); padding-top:0.25rem;">
+            <span>By: <strong>${escapeHtml(agentName)}</strong></span>
+            <span>Dur: <strong>${log.duration}s</strong></span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Submit call log form
+    async function submitCSCallLog(e) {
+      e.preventDefault();
+      const studentId = document.getElementById('call-student-select').value;
+      const duration = document.getElementById('call-duration').value;
+      const result = document.getElementById('call-result').value;
+      const notes = document.getElementById('call-notes').value;
+
+      try {
+        await apiRequest('/api/v1/call-logs', 'POST', { studentId, duration, result, notes });
+        showToast('Call log recorded successfully!', 'success');
+        document.getElementById('call-duration').value = '';
+        document.getElementById('call-notes').value = '';
+        loadCallLogs();
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    // Fetch and display notifications
+    async function loadNotifications() {
+      const activeToken = state.currentRole === 'student' ? state.studentToken : state.csToken;
+      if (!activeToken) return;
+
+      try {
+        const res = await apiRequest('/api/v1/notifications');
+        renderNotifications(res.data.notifications);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Render Notifications Dropdown Items
+    function renderNotifications(notifications) {
+      const container = document.getElementById('noti-items-list');
+      const countBadge = document.getElementById('noti-unread-count');
+      
+      const unreadCount = notifications.filter(n => !n.read).length;
+      if (unreadCount > 0) {
+        countBadge.innerText = unreadCount;
+        countBadge.style.display = 'block';
+      } else {
+        countBadge.style.display = 'none';
+      }
+
+      if (notifications.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔔</div>
+            <p>You have no notifications.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      notifications.forEach(n => {
+        const item = document.createElement('div');
+        item.style.padding = '0.5rem';
+        item.style.borderRadius = '0.5rem';
+        item.style.marginBottom = '0.5rem';
+        item.style.border = '1px solid rgba(255,255,255,0.03)';
+        item.style.background = n.read ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.04)';
+        item.style.cursor = n.read ? 'default' : 'pointer';
+
+        let icon = '🔔';
+        if (n.type === 'payment_approved') icon = '🟢';
+        if (n.type === 'payment_rejected') icon = '🔴';
+        if (n.type === 'payment_submitted') icon = '💳';
+        if (n.type.startsWith('membership_')) icon = '⏰';
+        if (n.type === 'complaint_updated') icon = '📢';
+
+        const timeStr = new Date(n.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'});
+
+        item.innerHTML = `
+          <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+            <span style="font-size:1.1rem;">${icon}</span>
+            <div style="flex:1;">
+              <div style="font-size:0.8rem; font-weight:700; color:white; display:flex; justify-content:space-between; align-items:center;">
+                <span>${escapeHtml(n.title)}</span>
+                ${!n.read ? `<span style="background:var(--color-secondary); width:6px; height:6px; border-radius:50%;"></span>` : ''}
+              </div>
+              <p style="font-size:0.75rem; color:var(--text-main); margin-top:0.15rem; line-height:1.2;">${escapeHtml(n.message)}</p>
+              <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.25rem;">${timeStr}</div>
+            </div>
+          </div>
+        `;
+
+        if (!n.read) {
+          item.onclick = async () => {
+            try {
+              await apiRequest(`/api/v1/notifications/${n._id}/read`, 'PUT');
+              loadNotifications();
+            } catch (err) {}
+          };
+        }
+
+        container.appendChild(item);
+      });
+    }
+
+    function toggleNotiDropdown() {
+      const dd = document.getElementById('noti-dropdown');
+      if (dd.style.display === 'none') {
+        dd.style.display = 'block';
+        loadNotifications();
+      } else {
+        dd.style.display = 'none';
+      }
+    }
+
+    async function markAllNotificationsAsRead() {
+      try {
+        await apiRequest('/api/v1/notifications/read-all', 'PUT');
+        loadNotifications();
+      } catch (err) {}
+    }
+
+    // Trigger simulate memberships expiry checking
+    async function triggerSimulateExpiry() {
+      const btn = document.getElementById('btn-simulate-expiry');
+      btn.innerText = 'Checking...';
+      btn.disabled = true;
+
+      try {
+        const res = await apiRequest('/api/v1/memberships/simulate-expiry', 'POST');
+        const data = res.data;
+        showToast(`Simulation completed! Detected ${data.expiredCount} expired and ${data.expiringCount} expiring subscriptions.`, 'success');
+        
+        loadPaymentsQueue();
+        if (state.studentToken) {
+          loadStudentMembership();
+          loadStudentComplaints();
+        }
+      } catch (err) {
+        // Handled
+      } finally {
+        btn.innerText = '⏰ Simulate Expiry Check';
+        btn.disabled = false;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

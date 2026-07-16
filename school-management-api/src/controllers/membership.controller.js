@@ -1,8 +1,11 @@
 const Membership = require('../models/membership.model');
 const MembershipPlan = require('../models/membership-plan.model');
 const Student = require('../models/student.model');
+const ReminderJob = require('../models/reminder-job.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const User = require('../models/user.model');
+const { createNotification } = require('./notification.controller');
 
 /**
  * @route   GET /api/v1/memberships
@@ -160,10 +163,123 @@ const deleteMembership = catchAsync(async (req, res, next) => {
   });
 });
 
+/**
+ * @route   GET /api/v1/memberships/reminder-jobs
+ * @desc    Get all scheduled membership reminder jobs
+ * @access  Private (CS, Admin, CEO)
+ */
+const getAllReminderJobs = catchAsync(async (req, res, next) => {
+  const reminderJobs = await ReminderJob.find()
+    .populate({
+      path: 'student',
+      select: 'name email phone'
+    })
+    .populate({
+      path: 'membership',
+      populate: {
+        path: 'plan',
+        select: 'name price duration'
+      }
+    })
+    .sort('reminderDate');
+
+  res.status(200).json({
+    status: 'success',
+    results: reminderJobs.length,
+    data: {
+      reminderJobs,
+    },
+  });
+});
+
+/**
+ * @route   POST /api/v1/memberships/simulate-expiry
+ * @desc    Simulate membership expiry checks and trigger notifications
+ * @access  Private (CS, Admin, CEO)
+ */
+const simulateExpiryCheck = catchAsync(async (req, res, next) => {
+  const Notification = require('../models/notification.model');
+  const memberships = await Membership.find({ status: { $in: ['Active', 'Expiring'] } });
+  
+  let expiredCount = 0;
+  let expiringCount = 0;
+
+  for (const membership of memberships) {
+    const studentProfile = await Student.findById(membership.student);
+    if (!studentProfile) continue;
+
+    const studentUser = await User.findOne({ email: studentProfile.email });
+    if (!studentUser) continue;
+
+    const now = new Date();
+    const expiry = new Date(membership.endDate);
+    const msDiff = expiry.getTime() - now.getTime();
+    const daysDiff = msDiff / (1000 * 60 * 60 * 24);
+
+    if (daysDiff <= 0) {
+      // Membership has expired
+      membership.status = 'Expired';
+      await membership.save();
+
+      studentProfile.status = 'Expired';
+      await studentProfile.save();
+
+      await createNotification(
+        studentUser._id,
+        'Membership Expired',
+        `Your membership subscription has expired. Please renew your membership to continue access.`,
+        'membership_expired'
+      );
+      
+      // Update ReminderJob status
+      await ReminderJob.updateMany(
+        { membership: membership._id, status: 'Pending' },
+        { status: 'Failed' }
+      );
+
+      expiredCount++;
+    } else if (daysDiff <= 7) {
+      // Membership is expiring (<= 7 days remaining)
+      // Check if they were already notified in the last 7 days to avoid spam
+      const alreadyNotified = await Notification.findOne({
+        user: studentUser._id,
+        type: 'membership_expiring',
+        createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      });
+
+      if (!alreadyNotified) {
+        membership.status = 'Expiring';
+        await membership.save();
+
+        await createNotification(
+          studentUser._id,
+          'Membership Expiring Soon',
+          `Your membership subscription will expire on ${expiry.toLocaleDateString()} (in ${Math.ceil(daysDiff)} days). Please renew soon.`,
+          'membership_expiring'
+        );
+
+        expiringCount++;
+      }
+    }
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Membership status simulation check completed successfully.',
+    data: {
+      expiredCount,
+      expiringCount,
+    }
+  });
+});
+
 module.exports = {
   getAllMemberships,
   getMembership,
   createMembership,
   updateMembership,
   deleteMembership,
+  getAllReminderJobs,
+  simulateExpiryCheck,
 };
+
