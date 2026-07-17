@@ -1244,6 +1244,61 @@
           </div>
         </div>
 
+        <!-- Reports Center Card -->
+        <div class="dashboard-card staff-card" id="cs-reports-card" style="display:none; margin-bottom:2rem;">
+          <div class="card-title">Operational Reports Center</div>
+          <p class="section-desc" style="font-size:0.75rem; margin-top:-0.5rem; margin-bottom:1rem; color:var(--text-muted);">Generate detailed operational analytics. View live data previews, or export to CSV, Excel, or print-optimized PDF.</p>
+          
+          <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap;">
+            <div style="flex:1; min-width:200px;">
+              <label for="report-select-type" style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; display:block; margin-bottom:0.35rem;">Report Type</label>
+              <select id="report-select-type" class="form-input" style="padding:0.6rem;">
+                <option value="revenue">Revenue Report</option>
+                <option value="membership">Membership Report</option>
+                <option value="payment">Payment Transaction Report</option>
+                <option value="complaint">Complaint Workload Report</option>
+                <option value="team-performance">Team Call Performance Report</option>
+              </select>
+            </div>
+            
+            <div style="display:flex; gap:0.5rem; margin-top:1.1rem;">
+              <button class="btn-action" onclick="generateReport()" style="padding:0.7rem 1.25rem;">
+                📊 Generate Report
+              </button>
+            </div>
+          </div>
+
+          <!-- Report Preview Section -->
+          <div id="report-preview-section" style="display:none; border-top:1px solid rgba(255,255,255,0.05); padding-top:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <h4 style="font-size:0.9rem; font-weight:700; color:white; margin:0;">Report Preview (<span id="report-preview-title">...</span>)</h4>
+              
+              <!-- Export Buttons -->
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="quick-creds-btn" style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem; padding:0.35rem 0.75rem; border-radius:0.35rem;" onclick="exportReport('csv')">📄 CSV</button>
+                <button class="quick-creds-btn" style="background:#15803d; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem; padding:0.35rem 0.75rem; border-radius:0.35rem;" onclick="exportReport('excel')">📈 Excel</button>
+                <button class="quick-creds-btn" style="background:#b91c1c; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem; padding:0.35rem 0.75rem; border-radius:0.35rem;" onclick="exportReport('pdf')">🛑 PDF</button>
+                <button class="quick-creds-btn" style="background:#0f766e; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem; padding:0.35rem 0.75rem; border-radius:0.35rem;" onclick="exportReport('sheets')">🟢 Google Sheets ⭐</button>
+                <button class="quick-creds-btn" style="background:#6d28d9; border:1px solid rgba(255,255,255,0.1); font-size:0.75rem; padding:0.35rem 0.75rem; border-radius:0.35rem;" onclick="exportReport('email')">📧 Email CEO ⭐</button>
+              </div>
+            </div>
+
+            <!-- Table responsive container -->
+            <div style="overflow-x:auto; background:rgba(0,0,0,0.2); border-radius:0.5rem; border:1px solid rgba(255,255,255,0.05); max-height:300px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left;">
+                <thead>
+                  <tr id="report-table-header" style="background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <!-- Dynamic Headers -->
+                  </tr>
+                </thead>
+                <tbody id="report-table-body">
+                  <!-- Dynamic Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div class="dashboard-card staff-card" id="cs-queue-card" style="display:none;">
           <div class="card-title">
             <span>Pending Payment Reviews</span>
@@ -1341,6 +1396,27 @@
 
       <button class="btn-submit-cs" style="width:100%;" onclick="closeProofModal()">
         Done Reviewing
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: EMAIL REPORT PREVIEW -->
+  <div class="modal-overlay" id="email-preview-modal">
+    <div class="modal-content" style="max-width: 850px; width: 90%; background: #0f172a; border: 1px solid var(--input-border); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+      <button class="modal-close" onclick="closeEmailPreviewModal()">✕</button>
+      <div class="modal-title" style="color: white; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.75rem; margin-bottom: 1.25rem;">📧 Emailed Report Details</div>
+      
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 1rem; border-radius: 0.75rem; font-size: 0.85rem; margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; color: var(--text-main);">
+        <div><strong>To:</strong> <span id="email-preview-to" style="color: var(--color-secondary);">ceo@schoolmanagement.com</span></div>
+        <div><strong>Subject:</strong> <span id="email-preview-subject" style="color: var(--color-amber);">Weekly Revenue Report</span></div>
+      </div>
+      
+      <div style="flex: 1; overflow-y: auto; background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); margin-bottom: 1rem;" id="email-preview-body-container">
+        <!-- Rendered HTML email body will be inserted here -->
+      </div>
+
+      <button class="btn-submit-cs" style="width:100%; margin-top: auto;" onclick="closeEmailPreviewModal()">
+        Close Preview
       </button>
     </div>
   </div>
@@ -1455,6 +1531,7 @@
         document.getElementById('cs-profile-card').style.display = 'block';
         document.getElementById('cs-call-logs-card').style.display = 'block';
         document.getElementById('cs-dashboard-card').style.display = 'block';
+        document.getElementById('cs-reports-card').style.display = 'block';
         document.getElementById('cs-welcome-info').style.display = 'none';
         document.getElementById('cs-queue-card').style.display = 'block';
         document.getElementById('cs-reminder-jobs-card').style.display = 'block';
@@ -1468,6 +1545,8 @@
         document.getElementById('cs-profile-card').style.display = 'none';
         document.getElementById('cs-call-logs-card').style.display = 'none';
         document.getElementById('cs-dashboard-card').style.display = 'none';
+        document.getElementById('cs-reports-card').style.display = 'none';
+        document.getElementById('report-preview-section').style.display = 'none';
         document.getElementById('cs-welcome-info').style.display = 'block';
         document.getElementById('cs-queue-card').style.display = 'none';
         document.getElementById('cs-reminder-jobs-card').style.display = 'none';
@@ -2603,6 +2682,269 @@
       
       const conversion = csPerformance.calls['Joined'] + csPerformance.calls['Upgraded'];
       document.getElementById('stat-calls-conversion').innerText = conversion;
+    }
+
+    // Reports Generation & Exports Logic
+    let activeReport = {
+      type: '',
+      title: '',
+      data: []
+    };
+
+    async function generateReport() {
+      const type = document.getElementById('report-select-type').value;
+      if (!state.csToken) return;
+
+      try {
+        const res = await apiRequest(`/api/v1/reports/${type}`);
+        activeReport.type = type;
+        activeReport.data = res.data.report;
+        activeReport.title = document.getElementById('report-select-type').options[document.getElementById('report-select-type').selectedIndex].text;
+        
+        renderReportPreview();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderReportPreview() {
+      const headerRow = document.getElementById('report-table-header');
+      const body = document.getElementById('report-table-body');
+      const titleSpan = document.getElementById('report-preview-title');
+      const previewSection = document.getElementById('report-preview-section');
+
+      previewSection.style.display = 'block';
+      titleSpan.innerText = activeReport.title;
+
+      headerRow.innerHTML = '';
+      body.innerHTML = '';
+
+      if (activeReport.data.length === 0) {
+        headerRow.innerHTML = `<th style="padding:0.75rem;">No Columns</th>`;
+        body.innerHTML = `<tr><td style="padding:1rem; text-align:center;" class="text-muted">No data available in this report.</td></tr>`;
+        return;
+      }
+
+      // Extract keys from first element as headers
+      const keys = Object.keys(activeReport.data[0]);
+      keys.forEach(key => {
+        const th = document.createElement('th');
+        th.style.padding = '0.75rem';
+        th.style.fontWeight = '700';
+        th.style.color = 'white';
+        th.innerText = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        headerRow.appendChild(th);
+      });
+
+      // Render Rows
+      activeReport.data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+        
+        keys.forEach(key => {
+          const td = document.createElement('td');
+          td.style.padding = '0.75rem';
+          td.style.color = 'var(--text-main)';
+          
+          let val = row[key];
+          if (val === null || val === undefined) {
+            val = 'N/A';
+          } else if (typeof val === 'number' && (key.toLowerCase().includes('amount') || key.toLowerCase().includes('revenue'))) {
+            val = `$${val.toFixed(2)}`;
+          } else if (typeof val === 'object') {
+            val = JSON.stringify(val);
+          }
+          td.innerText = val;
+          tr.appendChild(td);
+        });
+        
+        body.appendChild(tr);
+      });
+    }
+
+    function exportReport(format) {
+      if (!activeReport.data || activeReport.data.length === 0) {
+        showToast('No report data to export', 'error');
+        return;
+      }
+
+      const keys = Object.keys(activeReport.data[0]);
+      const filename = `${activeReport.type}_report_${new Date().toISOString().split('T')[0]}`;
+
+      if (format === 'csv') {
+        let csvContent = '';
+        csvContent += keys.join(',') + '\r\n';
+        activeReport.data.forEach(row => {
+          const rowVals = keys.map(k => {
+            let val = row[k];
+            if (val === null || val === undefined) val = '';
+            val = String(val).replace(/"/g, '""');
+            if (val.includes(',') || val.includes('\n') || val.includes('\r')) {
+              val = `"${val}"`;
+            }
+            return val;
+          });
+          csvContent += rowVals.join(',') + '\r\n';
+        });
+
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${filename}.csv`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('CSV Report Downloaded Successfully', 'success');
+
+      } else if (format === 'excel') {
+        let excelXML = `
+          <xml xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+            <Workbook>
+              <Worksheet ss:Name="Report">
+                <Table>
+                  <ss:Row>
+        `;
+        keys.forEach(k => {
+          excelXML += `<Cell><Data ss:Type="String">${k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</Data></Cell>`;
+        });
+        excelXML += `</ss:Row>`;
+        
+        activeReport.data.forEach(row => {
+          excelXML += `<ss:Row>`;
+          keys.forEach(k => {
+            let val = row[k];
+            let type = 'String';
+            if (typeof val === 'number') {
+              type = 'Number';
+            } else if (val === null || val === undefined) {
+              val = '';
+            }
+            excelXML += `<Cell><Data ss:Type="${type}">${val}</Data></Cell>`;
+          });
+          excelXML += `</ss:Row>`;
+        });
+        
+        excelXML += `
+                </Table>
+              </Worksheet>
+            </Workbook>
+          </xml>
+        `;
+        
+        const blob = new Blob([excelXML], { type: 'application/vnd.ms-excel' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${filename}.xls`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Excel Report Downloaded Successfully', 'success');
+
+      } else if (format === 'pdf') {
+        const printWindow = window.open('', '_blank');
+        let html = `
+          <html>
+          <head>
+            <title>${activeReport.title}</title>
+            <style>
+              body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; padding: 2rem; }
+              h1 { font-size: 1.8rem; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; margin-bottom: 0.5rem; color: #1e3a8a; }
+              .meta { font-size: 0.85rem; color: #64748b; margin-bottom: 2rem; }
+              table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+              th, td { border: 1px solid #e2e8f0; padding: 0.75rem; text-align: left; font-size: 0.85rem; }
+              th { background-color: #f1f5f9; font-weight: 700; color: #0f172a; }
+              tr:nth-child(even) { background-color: #f8fafc; }
+            </style>
+          </head>
+          <body>
+            <h1>${activeReport.title}</h1>
+            <div class="meta">Generated by School Internal Management System on ${new Date().toLocaleString()}</div>
+            <table>
+              <thead>
+                <tr>
+        `;
+
+        keys.forEach(k => {
+          html += `<th>${k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</th>`;
+        });
+        html += `
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        activeReport.data.forEach(row => {
+          html += `<tr>`;
+          keys.forEach(k => {
+            let val = row[k];
+            if (val === null || val === undefined) {
+              val = 'N/A';
+            } else if (typeof val === 'number' && (k.toLowerCase().includes('amount') || k.toLowerCase().includes('revenue'))) {
+              val = `$${val.toFixed(2)}`;
+            }
+            html += `<td>${val}</td>`;
+          });
+          html += `</tr>`;
+        });
+
+        html += `
+              </tbody>
+            </table>
+            <script>
+              window.onload = function() {
+                window.print();
+                setTimeout(() => window.close(), 500);
+              };
+            <\/script>
+          </body>
+          </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+      } else if (format === 'sheets') {
+        syncGoogleSheetsReport();
+      } else if (format === 'email') {
+        emailReportToCEO();
+      }
+    }
+
+    async function syncGoogleSheetsReport() {
+      if (!activeReport.type) return;
+      showToast('Connecting and syncing with Google Sheets...', 'info');
+      try {
+        const res = await apiRequest(`/api/v1/reports/${activeReport.type}/sync-sheets`, 'POST');
+        showToast('Sync successful! Loading spreadsheet mockup...', 'success');
+        
+        setTimeout(() => {
+          window.open(res.data.sheetUrl, '_blank');
+        }, 800);
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    async function emailReportToCEO() {
+      if (!activeReport.type) return;
+      showToast('Formatting email report for CEO...', 'info');
+      try {
+        const res = await apiRequest(`/api/v1/reports/${activeReport.type}/email-ceo`, 'POST');
+        showToast('Email sent to CEO successfully!', 'success');
+        
+        // Show modal preview
+        document.getElementById('email-preview-to').innerText = res.data.recipient;
+        document.getElementById('email-preview-subject').innerText = res.data.subject;
+        document.getElementById('email-preview-body-container').innerHTML = res.data.body;
+        document.getElementById('email-preview-modal').style.display = 'flex';
+      } catch (err) {
+        // Handled
+      }
+    }
+
+    function closeEmailPreviewModal() {
+      document.getElementById('email-preview-modal').style.display = 'none';
     }
 
     function escapeHtml(str) {
