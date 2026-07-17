@@ -6,6 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const User = require('../models/user.model');
 const { createNotification } = require('./notification.controller');
+const { logAction } = require('../utils/auditLogger');
 
 /**
  * @route   GET /api/v1/memberships
@@ -136,6 +137,16 @@ const updateMembership = catchAsync(async (req, res, next) => {
   if (!membership) {
     return next(new AppError('No membership found with that ID', 404));
   }
+
+  // Log Update Membership action to database audit logs
+  await logAction({
+    userId: req.user.id,
+    userEmail: req.user.email,
+    action: 'Update Membership',
+    module: 'Membership',
+    ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    details: `Updated membership ID ${membership._id} (New Status: ${status || 'N/A'}, New Start Date: ${startDate || 'N/A'}, New End Date: ${endDate || 'N/A'})`
+  });
 
   res.status(200).json({
     status: 'success',

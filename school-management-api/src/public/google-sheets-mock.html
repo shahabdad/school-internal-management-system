@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <style>
     :root {
@@ -36,6 +38,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      position: relative;
     }
 
     /* Header Bar */
@@ -69,11 +72,13 @@
       justify-content: center;
       font-family: 'Outfit', sans-serif;
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      cursor: pointer;
     }
 
     .title-area {
       display: flex;
       flex-direction: column;
+      position: relative;
     }
 
     .title-row {
@@ -123,15 +128,50 @@
       font-size: 13px;
     }
 
+    .menu-item-container {
+      position: relative;
+    }
+
     .menu-item {
       color: var(--text-dark);
       cursor: pointer;
       padding: 2px 6px;
       border-radius: 4px;
       transition: background 0.15s;
+      user-select: none;
     }
 
     .menu-item:hover {
+      background-color: #f1f3f4;
+    }
+
+    /* Menu Dropdowns */
+    .menu-dropdown {
+      position: absolute;
+      top: 22px;
+      left: 0;
+      background: white;
+      border: 1px solid var(--border-gray);
+      border-radius: 4px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      width: 180px;
+      padding: 4px 0;
+    }
+
+    .menu-dropdown-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      color: var(--text-dark);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .menu-dropdown-item:hover {
       background-color: #f1f3f4;
     }
 
@@ -151,13 +191,6 @@
       padding: 6px 12px;
       border-radius: 20px;
       font-weight: 500;
-      animation: pulse 2s infinite ease-in-out;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.9; }
-      50% { opacity: 1; }
-      100% { opacity: 0.9; }
     }
 
     .btn-share {
@@ -187,7 +220,7 @@
       padding: 6px 16px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       overflow-x: auto;
       height: 40px;
       white-space: nowrap;
@@ -216,6 +249,7 @@
       align-items: center;
       justify-content: center;
       color: #3c4043;
+      height: 28px;
     }
 
     .tool-btn:hover {
@@ -225,6 +259,37 @@
     .tool-btn.active {
       background-color: #d2e3fc;
       color: #1a73e8;
+    }
+
+    .toolbar-select {
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 2px 4px;
+      font-size: 12px;
+      outline: none;
+      border-radius: 4px;
+      height: 28px;
+      cursor: pointer;
+    }
+
+    .toolbar-select:hover {
+      background-color: #e0e2e5;
+    }
+
+    /* Color picker wraps */
+    .color-btn-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .color-picker-input {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
     }
 
     .search-container {
@@ -366,6 +431,117 @@
       border-bottom: 2px solid var(--border-gray);
     }
 
+    tr.formula-summary-row td {
+      font-weight: 700;
+      background-color: #f8fafc;
+      border-top: 1.5px double var(--border-gray);
+      color: #0f172a;
+    }
+
+    /* Floating Draggable Chart Container */
+    #chart-overlay-container {
+      position: absolute;
+      top: 150px;
+      left: 200px;
+      width: 450px;
+      height: 300px;
+      background: white;
+      border: 1px solid #c3c3c3;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 100;
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      resize: both;
+      overflow: hidden;
+    }
+
+    #chart-overlay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f3f4;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: move;
+      user-select: none;
+    }
+
+    .chart-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .chart-control-btn {
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: color 0.15s;
+    }
+
+    .chart-control-btn:hover {
+      color: var(--text-dark);
+    }
+
+    #chart-canvas-container {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+    }
+
+    /* Modals overlays */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--text-dark);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-dark);
+    }
+
     /* Footer / Sheet Tabs */
     footer {
       background-color: #f8f9fa;
@@ -412,12 +588,12 @@
     }
   </style>
 </head>
-<body>
+<body onclick="closeDropdowns(event)">
 
   <!-- Header Bar -->
   <header>
     <div class="header-left">
-      <div class="sheets-icon">田</div>
+      <div class="sheets-icon" onclick="window.close()">田</div>
       <div class="title-area">
         <div class="title-row">
           <div class="sheet-title" id="sheet-display-title" contenteditable="true" spellcheck="false">Syncing Report...</div>
@@ -428,7 +604,15 @@
           </div>
         </div>
         <div class="menu-bar">
-          <span class="menu-item">File</span>
+          <div class="menu-item-container">
+            <span class="menu-item" onclick="toggleMenuDropdown(event, 'file-dropdown')">File</span>
+            <div class="menu-dropdown" id="file-dropdown">
+              <div class="menu-dropdown-item" onclick="exportFromMock('csv')">📄 Download as CSV</div>
+              <div class="menu-dropdown-item" onclick="exportFromMock('excel')">📈 Download as Excel</div>
+              <div class="menu-dropdown-item" onclick="window.print()">🖨️ Print / Save PDF</div>
+              <div class="menu-dropdown-item" onclick="window.close()">✕ Exit Spreadsheet</div>
+            </div>
+          </div>
           <span class="menu-item">Edit</span>
           <span class="menu-item">View</span>
           <span class="menu-item">Insert</span>
@@ -446,7 +630,7 @@
         <span>🟢</span>
         <span id="sync-status">Live Synced</span>
       </div>
-      <button class="btn-share" onclick="alert('This simulated Google Sheet is private to your internal school management dashboard.')">
+      <button class="btn-share" onclick="openShareModal()">
         🔒 Share
       </button>
     </div>
@@ -458,32 +642,59 @@
       <button class="tool-btn" onclick="alert('Undo')">↩</button>
       <button class="tool-btn" onclick="alert('Redo')">↪</button>
       <button class="tool-btn" onclick="window.print()">🖨️</button>
-      <button class="tool-btn">🖌️</button>
     </div>
     
     <div class="toolbar-group">
-      <button class="tool-btn" style="font-weight:700;">$</button>
-      <button class="tool-btn">%</button>
-      <button class="tool-btn">.0</button>
-      <button class="tool-btn">.00</button>
+      <!-- Font Family Selector -->
+      <select class="toolbar-select" id="tool-font-family" onchange="changeCellFontFamily(this.value)">
+        <option value="'Inter', sans-serif">Inter</option>
+        <option value="'Outfit', sans-serif">Outfit</option>
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier</option>
+        <option value="Georgia">Georgia</option>
+      </select>
+      
+      <!-- Font Size Selector -->
+      <select class="toolbar-select" id="tool-font-size" onchange="changeCellFontSize(this.value)">
+        <option value="11px">11</option>
+        <option value="12px" selected>12</option>
+        <option value="14px">14</option>
+        <option value="16px">16</option>
+        <option value="18px">18</option>
+      </select>
     </div>
 
     <div class="toolbar-group">
       <button class="tool-btn" id="tool-bold" onclick="toggleTextWeight()"><b>B</b></button>
       <button class="tool-btn" id="tool-italic" onclick="toggleTextStyle()"><i>I</i></button>
-      <button class="tool-btn"><s>S</s></button>
-      <button class="tool-btn">🎨</button>
+      <button class="tool-btn" onclick="toggleTextUnderline()"><u>U</u></button>
+      
+      <!-- Text Color Picker -->
+      <div class="color-btn-wrapper tool-btn">
+        <span>A🎨</span>
+        <input type="color" class="color-picker-input" onchange="changeCellTextColor(this.value)">
+      </div>
+      
+      <!-- Fill Color Picker -->
+      <div class="color-btn-wrapper tool-btn">
+        <span>🪣</span>
+        <input type="color" class="color-picker-input" value="#ffffff" onchange="changeCellBgColor(this.value)">
+      </div>
     </div>
 
     <div class="toolbar-group">
-      <button class="tool-btn">田</button>
-      <button class="tool-btn">☵</button>
-      <button class="tool-btn">📐</button>
+      <button class="tool-btn" onclick="changeCellAlignment('left')">☲</button>
+      <button class="tool-btn" onclick="changeCellAlignment('center')">☵</button>
+      <button class="tool-btn" onclick="changeCellAlignment('right')">☴</button>
+    </div>
+
+    <div class="toolbar-group">
+      <button class="tool-btn" id="tool-chart-toggle" style="background:#e6f4ea; border:1px solid #a8dab5; color:#137333; font-weight:600; padding:0 8px; font-size:12px;" onclick="toggleChartOverlay()">📊 Toggle Chart</button>
     </div>
 
     <div class="search-container">
       <span>🔍</span>
-      <input type="text" id="sheet-search" class="search-input" placeholder="Search Sheet data..." oninput="handleSearch(this.value)">
+      <input type="text" id="sheet-search" class="search-input" placeholder="Search data..." oninput="handleSearch(this.value)">
     </div>
   </div>
 
@@ -499,6 +710,46 @@
     <table class="spreadsheet-grid" id="sheets-table">
       <!-- Headers & Grid Cells will load here dynamically -->
     </table>
+  </div>
+
+  <!-- Draggable Chart Overlay Container -->
+  <div id="chart-overlay-container">
+    <div id="chart-overlay-header">
+      <span id="chart-header-title">📊 Operational Chart Analytics</span>
+      <div class="chart-controls">
+        <span class="chart-control-btn" id="chart-min-btn" onclick="toggleChartMinMax()" title="Collapse Chart">➖</span>
+        <span class="chart-control-btn" onclick="toggleChartOverlay()" title="Close Chart">✕</span>
+      </div>
+    </div>
+    <div id="chart-canvas-container">
+      <canvas id="report-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Modal: Share Spreadsheet -->
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeShareModal()">✕</button>
+      <div class="modal-title">Share with people and groups</div>
+      
+      <div style="margin-bottom:1.5rem;">
+        <label style="font-size:11px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Add email or group</label>
+        <input type="email" id="share-email-input" style="width:100%; padding:0.6rem; border:1px solid var(--border-gray); border-radius:4px; font-size:13px; outline:none;" placeholder="Enter email address...">
+      </div>
+
+      <div style="background:#f8f9fa; border:1px solid var(--border-gray); border-radius:6px; padding:12px; font-size:12px; margin-bottom:1.5rem; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">🔒</span>
+        <div>
+          <strong>General access restricted</strong>
+          <p style="color:var(--text-muted); margin:0;">Only authorized dashboard administrators can open this link.</p>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <button style="background:transparent; border:1px solid var(--border-gray); border-radius:20px; padding:6px 16px; font-weight:500; cursor:pointer;" onclick="alert('Mock link copied to clipboard!')">🔗 Copy Link</button>
+        <button style="background:var(--g-sheets-green); color:white; border:none; border-radius:20px; padding:8px 24px; font-weight:600; cursor:pointer;" onclick="closeShareModal()">Done</button>
+      </div>
+    </div>
   </div>
 
   <!-- Footer / Tabs -->
@@ -524,8 +775,9 @@
       reportType: '',
       reportTitle: '',
       data: [],
-      selectedCell: { r: 1, c: 0 }, // Row 1 (header), Col A (index 0)
-      token: localStorage.getItem('cs_token') // CS token for authentication
+      selectedCell: { r: 1, c: 0 }, // Row 1, Col A (index 0)
+      token: localStorage.getItem('cs_token'),
+      formulaCells: {} // Maps cellId to formula string
     };
 
     // Parse parameters
@@ -536,31 +788,29 @@
     window.addEventListener('DOMContentLoaded', () => {
       buildEmptyGrid();
       fetchReportData();
+      makeChartDraggable();
     });
 
-    // Generate a default empty grid layout
+    // Generate empty spreadsheet grid
     function buildEmptyGrid() {
       const table = document.getElementById('sheets-table');
       table.innerHTML = '';
 
-      // Create column group for widths
+      // Width columns
       const colgroup = document.createElement('colgroup');
-      // corner width
       const cornerCol = document.createElement('col');
       cornerCol.style.width = "46px";
       colgroup.appendChild(cornerCol);
-      // cells widths
       for (let i = 0; i < cols.length; i++) {
         const col = document.createElement('col');
-        col.style.width = i < 6 ? "160px" : "100px"; // Wider for report content
+        col.style.width = i < 6 ? "160px" : "100px";
         colgroup.appendChild(col);
       }
       table.appendChild(colgroup);
 
-      // Create Head (Top row: A, B, C...)
+      // Thread top headers
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
-      
       const cornerTh = document.createElement('th');
       cornerTh.className = 'grid-header grid-corner';
       headerRow.appendChild(cornerTh);
@@ -574,27 +824,22 @@
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
-      // Create Body rows
+      // Body rows
       const tbody = document.createElement('tbody');
       for (let r = 1; r <= defaultRowCount; r++) {
         const row = document.createElement('tr');
-        
-        // Row Number header
         const rowHeader = document.createElement('th');
         rowHeader.className = 'grid-header row-header';
         rowHeader.innerText = r;
         row.appendChild(rowHeader);
 
-        // Columns
         for (let c = 0; c < cols.length; c++) {
           const cell = document.createElement('td');
           cell.className = 'grid-cell';
           cell.id = `cell-${r}-${c}`;
           cell.tabIndex = 0;
           
-          // Selection handler
           cell.addEventListener('mousedown', () => selectCell(r, c));
-          // In-cell edit double click
           cell.addEventListener('dblclick', () => makeCellEditable(cell, r, c));
           
           row.appendChild(cell);
@@ -604,7 +849,7 @@
       table.appendChild(tbody);
     }
 
-    // Fetch live data from backend report API
+    // Fetch live backend data
     async function fetchReportData() {
       if (!state.token) {
         document.getElementById('sheet-display-title').innerText = "Access Denied: Please log in to CS Portal";
@@ -626,32 +871,33 @@
 
         state.data = json.data.report;
         
-        // Generate formatting titles
         const titles = {
           'revenue': 'Google Sheets - Monthly Revenue Metrics Sync',
           'membership': 'Google Sheets - Active Subscriptions Aggregates Sync',
           'payment': 'Google Sheets - Billing Transactions Log Sync',
           'complaint': 'Google Sheets - Customer Service Complaints Workload Sync',
-          'team-performance': 'Google Sheets - CS Call Center KPIs Sync'
+          'team-performance': 'Google Sheets - CS Call Center KPIs Sync',
+          'audit-log': 'Google Sheets - System Activity Audit Logs Sync'
         };
         state.reportTitle = titles[state.reportType] || 'Google Sheets - Sync Report';
         document.getElementById('sheet-display-title').innerText = state.reportTitle.replace('Google Sheets - ', '');
         document.title = state.reportTitle;
         
         populateGrid();
+        renderChartAnalytics();
       } catch (err) {
         alert("Sync Error: " + err.message);
         document.getElementById('sheet-display-title').innerText = "Sync Error - " + err.message;
       }
     }
 
-    // Populate data records into Grid
+    // Populate grid rows & inject calculations summary at bottom
     function populateGrid() {
       if (state.data.length === 0) return;
 
       const keys = Object.keys(state.data[0]);
       
-      // 1. Populate Column Headers (Row 1)
+      // 1. Column headers
       keys.forEach((key, colIndex) => {
         const cell = document.getElementById(`cell-1-${colIndex}`);
         if (cell) {
@@ -660,16 +906,14 @@
         }
       });
 
-      // 2. Populate Rows (Row 2 onwards)
+      // 2. Data rows
       state.data.forEach((rowData, rIdx) => {
-        const rowNumber = rIdx + 2; // Rows starts at 2 (since row 1 is header)
+        const rowNumber = rIdx + 2;
         
         keys.forEach((key, cIdx) => {
           const cell = document.getElementById(`cell-${rowNumber}-${cIdx}`);
           if (cell) {
             let val = rowData[key];
-            
-            // Format number columns nicely
             if (typeof val === 'number' && (key.toLowerCase().includes('amount') || key.toLowerCase().includes('revenue') || key.toLowerCase().includes('avg'))) {
               cell.innerText = `$${val.toFixed(2)}`;
               cell.style.textAlign = 'right';
@@ -680,35 +924,66 @@
         });
       });
 
-      // Select A1 cell as default
+      // 3. Inject calculations SUM / AVERAGE rows at bottom of report
+      const summaryStartRow = state.data.length + 3;
+      const endDataRow = state.data.length + 1;
+
+      // SUM row
+      const sumRow = document.getElementById(`cell-${summaryStartRow}-${0}`).parentElement;
+      sumRow.classList.add('formula-summary-row');
+      document.getElementById(`cell-${summaryStartRow}-${0}`).innerText = "Total (SUM)";
+      
+      // AVERAGE row
+      const avgRow = document.getElementById(`cell-${summaryStartRow+1}-${0}`).parentElement;
+      avgRow.classList.add('formula-summary-row');
+      document.getElementById(`cell-${summaryStartRow+1}-${0}`).innerText = "Average (AVERAGE)";
+
+      // Inject formulas into numeric columns
+      keys.forEach((key, cIdx) => {
+        if (cIdx === 0) return; // Skip label column
+
+        // Check if values in this column are numeric
+        const sampleVal = state.data[0][key];
+        if (typeof sampleVal === 'number') {
+          const colLetter = cols[cIdx];
+          
+          // SUM cell
+          const sumCell = document.getElementById(`cell-${summaryStartRow}-${cIdx}`);
+          sumCell.dataset.formula = `=SUM(${colLetter}2:${colLetter}${endDataRow})`;
+          
+          // AVERAGE cell
+          const avgCell = document.getElementById(`cell-${summaryStartRow+1}-${cIdx}`);
+          avgCell.dataset.formula = `=AVERAGE(${colLetter}2:${colLetter}${endDataRow})`;
+        }
+      });
+
+      recalculateAllFormulas();
       selectCell(1, 0);
     }
 
-    // Grid selection controller
+    // Spreadsheet selection logic
     function selectCell(r, c) {
-      // Remove old selection style
       const oldCell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
       if (oldCell) {
         oldCell.classList.remove('selected');
       }
 
       state.selectedCell = { r, c };
-
       const cell = document.getElementById(`cell-${r}-${c}`);
       if (cell) {
         cell.classList.add('selected');
         cell.focus();
 
-        // Update address box & formula value
         const colLetter = cols[c];
         document.getElementById('cell-address').innerText = `${colLetter}${r}`;
-        document.getElementById('formula-value').value = cell.innerText;
         
-        // Synchronize Bold & Italic button highlights
-        document.getElementById('tool-bold').className = cell.style.fontWeight === 'bold' ? 'tool-btn active' : 'tool-btn';
-        document.getElementById('tool-italic').className = cell.style.fontStyle === 'italic' ? 'tool-btn active' : 'tool-btn';
-
-        // Update status info
+        // Show formula syntax in formula bar if it has one, else regular text
+        document.getElementById('formula-value').value = cell.dataset.formula || cell.innerText;
+        
+        // Synchronize Toolbar Buttons highlights
+        document.getElementById('tool-bold').classList.toggle('active', cell.style.fontWeight === 'bold');
+        document.getElementById('tool-italic').classList.toggle('active', cell.style.fontStyle === 'italic');
+        
         document.getElementById('sheet-meta-info').innerText = `Rows: 100 | Cols: 26 | Selected: ${colLetter}${r}`;
       }
     }
@@ -717,16 +992,22 @@
     function updateActiveCell(val) {
       const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
       if (cell) {
-        cell.innerText = val;
+        if (val.startsWith('=')) {
+          cell.dataset.formula = val;
+        } else {
+          delete cell.dataset.formula;
+          cell.innerText = val;
+        }
+        recalculateAllFormulas();
+        if (activeChart) renderChartAnalytics(); // Refresh chart live
       }
     }
 
-    // Cell Double Click inline editing
+    // Cell Double Click inline editor
     function makeCellEditable(cell, r, c) {
-      // Check if already editing
       if (cell.querySelector('input')) return;
 
-      const currentVal = cell.innerText;
+      const currentVal = cell.dataset.formula || cell.innerText;
       cell.innerText = '';
       
       const input = document.createElement('input');
@@ -738,48 +1019,339 @@
       input.style.outline = 'none';
       input.style.fontFamily = 'inherit';
       input.style.fontSize = 'inherit';
-      input.style.padding = '0';
-      input.style.margin = '0';
       input.style.background = 'transparent';
 
       input.addEventListener('blur', () => {
-        cell.innerText = input.value;
-        document.getElementById('formula-value').value = input.value;
+        const val = input.value;
+        if (val.startsWith('=')) {
+          cell.dataset.formula = val;
+        } else {
+          delete cell.dataset.formula;
+          cell.innerText = val;
+        }
+        document.getElementById('formula-value').value = val;
+        recalculateAllFormulas();
+        renderChartAnalytics(); // Live update chart
       });
 
       input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          input.blur();
-        }
+        if (e.key === 'Enter') input.blur();
       });
 
       cell.appendChild(input);
       input.focus();
     }
 
-    // Toolbar formatting actions
+    // --- FORMULA ENGINE IMPLEMENTATION ---
+    function parseRange(rangeStr) {
+      const parts = rangeStr.split(':');
+      if (parts.length !== 2) return null;
+      const start = parseAddress(parts[0]);
+      const end = parseAddress(parts[1]);
+      if (!start || !end) return null;
+      return { start, end };
+    }
+
+    function parseAddress(addressStr) {
+      const match = addressStr.match(/^([A-Z]+)([0-9]+)$/);
+      if (!match) return null;
+      const colName = match[1];
+      const rowNum = parseInt(match[2], 10);
+      const colIndex = cols.indexOf(colName);
+      if (colIndex === -1) return null;
+      return { r: rowNum, c: colIndex };
+    }
+
+    function evaluateFormula(formula) {
+      if (!formula.startsWith('=')) return formula;
+      const cleanFormula = formula.substring(1).toUpperCase().trim();
+      
+      // 1. SUM Formula
+      let match = cleanFormula.match(/^SUM\(([^)]+)\)$/);
+      if (match) {
+        const range = parseRange(match[1]);
+        if (!range) return '#NAME?';
+        let sum = 0;
+        for (let r = Math.min(range.start.r, range.end.r); r <= Math.max(range.start.r, range.end.r); r++) {
+          for (let c = Math.min(range.start.c, range.end.c); c <= Math.max(range.start.c, range.end.c); c++) {
+            const cell = document.getElementById(`cell-${r}-${c}`);
+            if (cell && !cell.dataset.formula) {
+              const val = parseCellNumericValue(cell.innerText);
+              if (!isNaN(val)) sum += val;
+            }
+          }
+        }
+        return sum;
+      }
+      
+      // 2. AVERAGE Formula
+      match = cleanFormula.match(/^AVERAGE\(([^)]+)\)$/);
+      if (match) {
+        const range = parseRange(match[1]);
+        if (!range) return '#NAME?';
+        let sum = 0;
+        let count = 0;
+        for (let r = Math.min(range.start.r, range.end.r); r <= Math.max(range.start.r, range.end.r); r++) {
+          for (let c = Math.min(range.start.c, range.end.c); c <= Math.max(range.start.c, range.end.c); c++) {
+            const cell = document.getElementById(`cell-${r}-${c}`);
+            if (cell && !cell.dataset.formula) {
+              const val = parseCellNumericValue(cell.innerText);
+              if (!isNaN(val)) {
+                sum += val;
+                count++;
+              }
+            }
+          }
+        }
+        return count > 0 ? (sum / count) : 0;
+      }
+      
+      return formula;
+    }
+
+    function parseCellNumericValue(str) {
+      if (!str) return 0;
+      const cleanStr = str.replace(/[$,\s]/g, '');
+      return parseFloat(cleanStr);
+    }
+
+    function recalculateAllFormulas() {
+      const cellsWithFormulas = document.querySelectorAll('[data-formula]');
+      cellsWithFormulas.forEach(cell => {
+        const formula = cell.dataset.formula;
+        const res = evaluateFormula(formula);
+        
+        if (typeof res === 'number') {
+          const isCurrency = state.reportType === 'revenue' || state.reportType === 'payment';
+          cell.innerText = isCurrency ? `$${res.toFixed(2)}` : res.toFixed(1);
+          cell.style.textAlign = 'right';
+        } else {
+          cell.innerText = res;
+        }
+      });
+    }
+
+    // --- CHART.JS METRICS OVERLAY ---
+    let activeChart = null;
+
+    function renderChartAnalytics() {
+      if (state.data.length === 0) return;
+      
+      const container = document.getElementById('chart-overlay-container');
+      if (state.reportType === 'audit-log') {
+        container.style.display = 'none';
+        return;
+      }
+
+      const ctx = document.getElementById('report-chart').getContext('2d');
+      if (activeChart) activeChart.destroy();
+      
+      container.style.display = 'flex';
+      
+      const chartTypeMap = {
+        'revenue': 'line',
+        'membership': 'doughnut',
+        'payment': 'bar',
+        'complaint': 'polarArea',
+        'team-performance': 'bar'
+      };
+      
+      const type = chartTypeMap[state.reportType] || 'bar';
+      let labels = [];
+      let datasets = [];
+      
+      // Pull live values directly from DOM grid cells for charts accuracy
+      if (state.reportType === 'revenue') {
+        // Collect labels and values from columns
+        for (let r = 2; r <= state.data.length + 1; r++) {
+          labels.push(document.getElementById(`cell-${r}-0`).innerText);
+          datasets.push(parseCellNumericValue(document.getElementById(`cell-${r}-2`).innerText));
+        }
+        labels.reverse();
+        datasets.reverse();
+
+        datasets = [{
+          label: 'Monthly Revenue ($)',
+          data: datasets,
+          borderColor: '#0f9d58',
+          backgroundColor: 'rgba(15, 157, 88, 0.1)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }];
+      } else if (state.reportType === 'membership') {
+        const counts = [];
+        for (let r = 2; r <= state.data.length + 1; r++) {
+          const name = document.getElementById(`cell-${r}-0`).innerText;
+          const status = document.getElementById(`cell-${r}-1`).innerText;
+          labels.push(`${name} (${status})`);
+          counts.push(parseCellNumericValue(document.getElementById(`cell-${r}-2`).innerText));
+        }
+        datasets = [{
+          label: 'Subscriptions Count',
+          data: counts,
+          backgroundColor: ['#0f9d58', '#4285f4', '#fbcb05', '#ea4335', '#a0c2f9', '#b8e1c4'],
+          borderWidth: 1
+        }];
+      } else {
+        // Generic parsing fallback based on rows count
+        const counts = [];
+        for (let r = 2; r <= Math.min(10, state.data.length + 1); r++) {
+          labels.push(document.getElementById(`cell-${r}-0`).innerText);
+          counts.push(parseCellNumericValue(document.getElementById(`cell-${r}-3`).innerText || '1'));
+        }
+        datasets = [{
+          label: 'Operational Quantities',
+          data: counts,
+          backgroundColor: '#4285f4',
+          borderWidth: 1
+        }];
+      }
+      
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: type === 'doughnut' || type === 'polarArea' ? 'right' : 'top',
+            labels: { boxWidth: 10, font: { size: 9 } }
+          }
+        }
+      };
+      
+      activeChart = new Chart(ctx, {
+        type: type,
+        data: { labels, datasets },
+        options: chartOptions
+      });
+    }
+
+    // Draggable container script implementation
+    function makeChartDraggable() {
+      const container = document.getElementById('chart-overlay-container');
+      const header = document.getElementById('chart-overlay-header');
+      let active = false;
+      let currentX;
+      let currentY;
+      let initialX;
+      let initialY;
+      let xOffset = 0;
+      let yOffset = 0;
+
+      header.addEventListener('mousedown', dragStart);
+      document.addEventListener('mouseup', dragEnd);
+      document.addEventListener('mousemove', drag);
+
+      function dragStart(e) {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+        if (e.target === header || e.target.parentElement === header || e.target.id === 'chart-header-title') {
+          active = true;
+        }
+      }
+
+      function dragEnd() {
+        initialX = currentX;
+        initialY = currentY;
+        active = false;
+      }
+
+      function drag(e) {
+        if (active) {
+          e.preventDefault();
+          currentX = e.clientX - initialX;
+          currentY = e.clientY - initialY;
+          xOffset = currentX;
+          yOffset = currentY;
+          container.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+        }
+      }
+    }
+
+    function toggleChartOverlay() {
+      const container = document.getElementById('chart-overlay-container');
+      const isHidden = container.style.display === 'none' || !container.style.display;
+      container.style.display = isHidden ? 'flex' : 'none';
+      if (isHidden) renderChartAnalytics();
+    }
+
+    function toggleChartMinMax() {
+      const canvas = document.getElementById('chart-canvas-container');
+      const container = document.getElementById('chart-overlay-container');
+      const minBtn = document.getElementById('chart-min-btn');
+      
+      if (canvas.style.display !== 'none') {
+        canvas.style.display = 'none';
+        container.style.height = '42px';
+        minBtn.innerText = '⬜';
+        minBtn.title = 'Expand Chart';
+      } else {
+        canvas.style.display = 'block';
+        container.style.height = '300px';
+        minBtn.innerText = '➖';
+        minBtn.title = 'Collapse Chart';
+        renderChartAnalytics();
+      }
+    }
+
+    // --- TOOLBAR CELL STYLING CONTROLS ---
     function toggleTextWeight() {
       const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
       if (cell) {
         const isBold = cell.style.fontWeight === 'bold';
         cell.style.fontWeight = isBold ? 'normal' : 'bold';
-        document.getElementById('tool-bold').className = isBold ? 'tool-btn' : 'tool-btn active';
+        document.getElementById('tool-bold').classList.toggle('active', !isBold);
       }
     }
 
-    // Toggle italic style
     function toggleTextStyle() {
       const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
       if (cell) {
         const isItalic = cell.style.fontStyle === 'italic';
         cell.style.fontStyle = isItalic ? 'normal' : 'italic';
-        document.getElementById('tool-italic').className = isItalic ? 'tool-btn' : 'tool-btn active';
+        document.getElementById('tool-italic').classList.toggle('active', !isItalic);
       }
+    }
+
+    function toggleTextUnderline() {
+      const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
+      if (cell) {
+        const isUnderline = cell.style.textDecoration === 'underline';
+        cell.style.textDecoration = isUnderline ? 'none' : 'underline';
+      }
+    }
+
+    function changeCellFontFamily(font) {
+      const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
+      if (cell) cell.style.fontFamily = font;
+    }
+
+    // Adjust font size
+    function changeCellFontSize(size) {
+      const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
+      if (cell) cell.style.fontSize = size;
+    }
+
+    // Alignment controls
+    function changeCellAlignment(align) {
+      const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
+      if (cell) cell.style.textAlign = align;
+    }
+
+    // Fill background color
+    function changeCellBgColor(color) {
+      const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
+      if (cell) cell.style.backgroundColor = color;
+    }
+
+    // Text colorpicker changed
+    function changeCellTextColor(color) {
+      const cell = document.getElementById(`cell-${state.selectedCell.r}-${state.selectedCell.c}`);
+      if (cell) cell.style.color = color;
     }
 
     // Filter search highlights
     function handleSearch(q) {
-      // Reset old highlights
       const cells = document.querySelectorAll('.grid-cell');
       cells.forEach(c => c.classList.remove('highlighted'));
 
@@ -791,6 +1363,94 @@
           c.classList.add('highlighted');
         }
       });
+    }
+
+    // --- NAVIGATION FILE DROP-DOWN AND SHARE MODALS ---
+    function toggleMenuDropdown(e, dropdownId) {
+      e.stopPropagation();
+      const dd = document.getElementById(dropdownId);
+      const isVisible = dd.style.display === 'flex';
+      closeDropdowns();
+      dd.style.display = isVisible ? 'none' : 'flex';
+    }
+
+    function closeDropdowns() {
+      document.querySelectorAll('.menu-dropdown').forEach(d => d.style.display = 'none');
+    }
+
+    function openShareModal() {
+      document.getElementById('share-modal').style.display = 'flex';
+    }
+
+    function closeShareModal() {
+      document.getElementById('share-modal').style.display = 'none';
+    }
+
+    // Client-side export downloads
+    function exportFromMock(format) {
+      const filename = `${state.reportType}_report_googlesheets`;
+      const keys = [];
+      
+      // Figure out header columns count
+      let cIdx = 0;
+      while (true) {
+        const headerCell = document.getElementById(`cell-1-${cIdx}`);
+        if (!headerCell || !headerCell.innerText) break;
+        keys.push(headerCell.innerText);
+        cIdx++;
+      }
+
+      // Collect cells content from all rows
+      const gridRows = [];
+      let rIdx = 2;
+      while (true) {
+        const labelCell = document.getElementById(`cell-${rIdx}-0`);
+        if (!labelCell || !labelCell.innerText) break;
+        
+        // Stop if it's the Total formula summary row
+        if (labelCell.parentElement.classList.contains('formula-summary-row')) break;
+
+        const rowData = [];
+        for (let col = 0; col < keys.length; col++) {
+          rowData.push(document.getElementById(`cell-${rIdx}-${col}`).innerText);
+        }
+        gridRows.push(rowData);
+        rIdx++;
+      }
+
+      if (format === 'csv') {
+        let csvContent = keys.join(',') + '\r\n';
+        gridRows.forEach(row => {
+          csvContent += row.map(v => `"${v.replace(/"/g, '""')}"`).join(',') + '\r\n';
+        });
+
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${filename}.csv`;
+        link.click();
+      } else if (format === 'excel') {
+        let excelXML = `<xml xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Workbook><Worksheet ss:Name="Report"><Table><ss:Row>`;
+        keys.forEach(k => excelXML += `<Cell><Data ss:Type="String">${k}</Data></Cell>`);
+        excelXML += `</ss:Row>`;
+        
+        gridRows.forEach(row => {
+          excelXML += `<ss:Row>`;
+          row.forEach(v => {
+            const numericVal = parseCellNumericValue(v);
+            const isNum = !isNaN(numericVal) && v.includes('$');
+            excelXML += `<Cell><Data ss:Type="${isNum ? 'Number' : 'String'}">${isNum ? numericVal : v}</Data></Cell>`;
+          });
+          excelXML += `</ss:Row>`;
+        });
+        excelXML += `</Table></Worksheet></Workbook></xml>`;
+
+        const blob = new Blob([excelXML], { type: 'application/vnd.ms-excel' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${filename}.xls`;
+        link.click();
+      }
     }
   </script>
 </body>

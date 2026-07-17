@@ -9,6 +9,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { sendEmail } = require('../services/email.service');
 const { createNotification } = require('./notification.controller');
+const { logAction } = require('../utils/auditLogger');
 const fs = require('fs');
 
 /**
@@ -242,6 +243,16 @@ const approvePayment = catchAsync(async (req, res, next) => {
     // Commit Transaction
     await session.commitTransaction();
     session.endSession();
+
+    // Log Approve Payment action to database audit logs
+    await logAction({
+      userId: req.user.id,
+      userEmail: req.user.email,
+      action: 'Approve Payment',
+      module: 'Payment',
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      details: `Approved payment of $${payment.amount} for student ${payment.studentEmail} (Plan: ${payment.membershipPlan.name})`
+    });
 
     // Trigger notification: Payment approved
     await createNotification(

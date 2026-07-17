@@ -9,9 +9,11 @@ const ReminderJob = require('../models/reminder-job.model');
 const Complaint = require('../models/complaint.model');
 const CallLog = require('../models/call-log.model');
 const Notification = require('../models/notification.model');
+const AuditLog = require('../models/audit-log.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { sendEmail } = require('../services/email.service');
+const { logAction } = require('../utils/auditLogger');
 
 // Generate access tokens (short-lived)
 const signAccessToken = (id) => {
@@ -99,6 +101,16 @@ const login = catchAsync(async (req, res, next) => {
   if (user.active === false) {
     return next(new AppError('Your account is deactivated. Please contact support.', 401));
   }
+
+  // Log User Login action to database audit logs
+  await logAction({
+    userId: user._id,
+    userEmail: user.email,
+    action: 'User Login',
+    module: 'Auth',
+    ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    details: `User logged in successfully (Role: ${user.role})`
+  });
 
   sendTokensResponse(user, 200, res);
 });
@@ -257,6 +269,7 @@ const seedDatabase = catchAsync(async (req, res, next) => {
   await Complaint.deleteMany({});
   await CallLog.deleteMany({});
   await Notification.deleteMany({});
+  await AuditLog.deleteMany({});
 
   // 2) Seed Membership Plans
   const plans = await MembershipPlan.create([
@@ -353,6 +366,28 @@ const seedDatabase = catchAsync(async (req, res, next) => {
     result: 'Interested',
     notes: 'Called the student to follow up on gym portal activation. They expressed interest in upgrading to Premium.',
   });
+
+  // 9) Seed starter Audit Logs
+  await AuditLog.create([
+    {
+      user: csUser._id,
+      userEmail: csUser.email,
+      action: 'User Login',
+      module: 'Auth',
+      ipAddress: '192.168.1.100',
+      details: 'User logged in successfully (Role: CustomerService)',
+      createdAt: new Date(Date.now() - 3600000)
+    },
+    {
+      user: csUser._id,
+      userEmail: csUser.email,
+      action: 'User Login',
+      module: 'Auth',
+      ipAddress: '192.168.1.102',
+      details: 'User logged in successfully (Role: Student)',
+      createdAt: new Date(Date.now() - 7200000)
+    }
+  ]);
 
   res.status(200).json({
     status: 'success',
