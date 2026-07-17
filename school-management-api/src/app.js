@@ -15,6 +15,7 @@ const complaintRoutes = require('./routes/complaint.routes');
 const callLogRoutes = require('./routes/call-log.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const reportsRoutes = require('./routes/reports.routes');
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use('/api/v1/complaints', complaintRoutes);
 app.use('/api/v1/call-logs', callLogRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/reports', reportsRoutes);
 
 // Health check endpoint
 app.use('/api/health', (req, res) => {
