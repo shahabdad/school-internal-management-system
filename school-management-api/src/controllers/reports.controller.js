@@ -3,6 +3,7 @@ const Membership = require('../models/membership.model');
 const Complaint = require('../models/complaint.model');
 const CallLog = require('../models/call-log.model');
 const User = require('../models/user.model');
+const AuditLog = require('../models/audit-log.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { sendEmail } = require('../services/email.service');
@@ -181,6 +182,23 @@ const getReportDataHelper = async (reportType) => {
         },
         { $sort: { totalCalls: -1 } }
       ]);
+      break;
+
+    case 'audit-log':
+      // Audit Logs tracking actions across modules
+      const rawLogs = await AuditLog.find()
+        .populate('user', 'name email role')
+        .sort({ createdAt: -1 });
+
+      reportData = rawLogs.map(log => ({
+        actorName: log.user ? log.user.name : 'System/Anonymous',
+        actorEmail: log.userEmail || 'N/A',
+        action: log.action,
+        module: log.module,
+        ipAddress: log.ipAddress,
+        details: log.details || 'N/A',
+        timestamp: log.createdAt.toISOString().split('T')[0] + ' ' + log.createdAt.toTimeString().split(' ')[0]
+      }));
       break;
 
     default:

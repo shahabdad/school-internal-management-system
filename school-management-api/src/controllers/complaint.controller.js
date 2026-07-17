@@ -4,6 +4,7 @@ const User = require('../models/user.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { createNotification } = require('./notification.controller');
+const { logAction } = require('../utils/auditLogger');
 
 // Helper to notify students of status updates on their complaints
 const notifyStudentOfComplaintUpdate = async (complaint) => {
@@ -218,6 +219,16 @@ const solveComplaint = catchAsync(async (req, res, next) => {
   complaint.status = 'Solved';
   await complaint.save();
   await notifyStudentOfComplaintUpdate(complaint);
+
+  // Log Resolve Complaint action to database audit logs
+  await logAction({
+    userId: req.user.id,
+    userEmail: req.user.email,
+    action: 'Resolve Complaint',
+    module: 'Complaint',
+    ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    details: `Resolved complaint "${complaint.title}" (ID: ${complaint._id}) with resolution: "${resolution}"`
+  });
 
   await complaint.populate([
     { path: 'student', select: 'name email' },

@@ -1,6 +1,7 @@
 const User = require('../models/user.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const { logAction } = require('../utils/auditLogger');
 
 /**
  * @route   GET /api/v1/users
@@ -161,6 +162,16 @@ const deleteUser = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError('No user found with that ID', 404));
   }
+
+  // Log Delete User action to database audit logs
+  await logAction({
+    userId: req.user.id,
+    userEmail: req.user.email,
+    action: 'Delete User',
+    module: 'User',
+    ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    details: `Deleted user with ID ${req.params.id} (Email: ${user.email}, Role: ${user.role})`
+  });
 
   res.status(204).json({
     status: 'success',
