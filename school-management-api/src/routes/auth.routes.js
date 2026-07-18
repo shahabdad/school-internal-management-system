@@ -7,6 +7,9 @@ const {
   forgotPassword,
   resetPassword,
   seedDatabase,
+  verify2FA,
+  approveDevice,
+  checkDeviceApproval,
 } = require('../controllers/auth.controller');
 const {
   validateRegister,
@@ -21,6 +24,9 @@ const { authenticate, checkPermission } = require('../middleware/auth.middleware
 
 router.post('/register', validateRegister, register);
 router.post('/login', validateLogin, login);
+router.post('/verify-2fa', verify2FA);
+router.get('/approve-device', approveDevice);
+router.post('/check-device-approval', checkDeviceApproval);
 router.post('/logout', logout);
 router.post('/refresh-token', refreshToken);
 router.post('/forgot-password', validateForgotPassword, forgotPassword);

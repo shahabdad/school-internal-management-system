@@ -3,6 +3,7 @@ const Student = require('../models/student.model');
 const User = require('../models/user.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const { checkAndNotifyRisk } = require('./student.controller');
 const { createNotification } = require('./notification.controller');
 const { logAction } = require('../utils/auditLogger');
 
@@ -50,6 +51,9 @@ const createComplaint = catchAsync(async (req, res, next) => {
     description,
     status: 'Created',
   });
+
+  // Check risk and notify staff of risk level spikes
+  await checkAndNotifyRisk(studentProfile._id, studentProfile.email, studentProfile.name);
 
   res.status(201).json({
     status: 'success',

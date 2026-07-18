@@ -1,5 +1,14 @@
 const AppError = require('../utils/appError');
 
+const isStrongPassword = (val) => {
+  if (!val || val.length < 10) return false;
+  const hasUpperCase = /[A-Z]/.test(val);
+  const hasLowerCase = /[a-z]/.test(val);
+  const hasNumber = /[0-9]/.test(val);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+  return hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+};
+
 const validateRegister = (req, res, next) => {
   const { name, email, password, role } = req.body;
 
@@ -16,8 +25,13 @@ const validateRegister = (req, res, next) => {
     return next(new AppError('Please provide a valid email address', 400));
   }
 
-  if (!password || password.length < 8) {
-    return next(new AppError('Password must be at least 8 characters long', 400));
+  if (!password || !isStrongPassword(password)) {
+    return next(
+      new AppError(
+        'Password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+        400
+      )
+    );
   }
 
   if (role && !['Student', 'CustomerService', 'OperationsManager', 'Admin', 'CEO'].includes(role)) {
@@ -54,8 +68,13 @@ const validateForgotPassword = (req, res, next) => {
 const validateResetPassword = (req, res, next) => {
   const { password } = req.body;
 
-  if (!password || password.length < 8) {
-    return next(new AppError('Password must be at least 8 characters long', 400));
+  if (!password || !isStrongPassword(password)) {
+    return next(
+      new AppError(
+        'Password must be at least 10 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+        400
+      )
+    );
   }
 
   next();

@@ -4,6 +4,7 @@ const Payment = require('../models/payment.model');
 const Complaint = require('../models/complaint.model');
 const CallLog = require('../models/call-log.model');
 const catchAsync = require('../utils/catchAsync');
+const { getRiskDetailsForStudent } = require('./student.controller');
 
 /**
  * @route   GET /api/v1/dashboard/stats
@@ -99,6 +100,22 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
   ]);
   const avgCallDuration = durationAgg.length > 0 ? Math.round(durationAgg[0].avgDuration) : 0;
 
+  // 7) Priority Support Queue (Sorted by Risk Score Descending)
+  const students = await Student.find();
+  const highRiskStudents = [];
+  for (const student of students) {
+    const riskDetails = await getRiskDetailsForStudent(student._id, student.email);
+    highRiskStudents.push({
+      id: student._id,
+      name: student.name,
+      email: student.email,
+      phone: student.phone,
+      riskLevel: riskDetails.level,
+      riskDetails,
+    });
+  }
+  highRiskStudents.sort((a, b) => b.riskDetails.score - a.riskDetails.score);
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -113,6 +130,7 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
         calls,
         avgCallDuration,
       },
+      highRiskStudents,
     },
   });
 });

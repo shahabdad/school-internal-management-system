@@ -10,6 +10,7 @@ const AppError = require('../utils/appError');
 const { sendEmail } = require('../services/email.service');
 const { createNotification } = require('./notification.controller');
 const { logAction } = require('../utils/auditLogger');
+const { checkAndNotifyRisk } = require('./student.controller');
 const fs = require('fs');
 
 /**
@@ -69,6 +70,12 @@ const uploadProof = catchAsync(async (req, res, next) => {
         `A new payment proof from ${req.user.name} (${req.user.email}) for the "${plan.name}" plan is pending review.`,
         'payment_submitted'
       );
+    }
+
+    // Check risk and notify staff of risk level spikes
+    const student = await Student.findOne({ email: req.user.email });
+    if (student) {
+      await checkAndNotifyRisk(student._id, student.email, student.name);
     }
 
     res.status(201).json({

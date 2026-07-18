@@ -7,6 +7,7 @@ const AppError = require('../utils/appError');
 const User = require('../models/user.model');
 const { createNotification } = require('./notification.controller');
 const { logAction } = require('../utils/auditLogger');
+const { checkAndNotifyRisk } = require('./student.controller');
 
 /**
  * @route   GET /api/v1/memberships
@@ -248,6 +249,9 @@ const simulateExpiryCheck = catchAsync(async (req, res, next) => {
         { status: 'Failed' }
       );
 
+      // Check risk and notify staff of risk level spikes
+      await checkAndNotifyRisk(studentProfile._id, studentProfile.email, studentProfile.name);
+
       expiredCount++;
     } else if (daysDiff <= 7) {
       // Membership is expiring (<= 7 days remaining)
@@ -268,6 +272,9 @@ const simulateExpiryCheck = catchAsync(async (req, res, next) => {
           `Your membership subscription will expire on ${expiry.toLocaleDateString()} (in ${Math.ceil(daysDiff)} days). Please renew soon.`,
           'membership_expiring'
         );
+
+        // Check risk and notify staff of risk level spikes
+        await checkAndNotifyRisk(studentProfile._id, studentProfile.email, studentProfile.name);
 
         expiringCount++;
       }
