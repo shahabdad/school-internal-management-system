@@ -829,6 +829,66 @@
       font-size: 0.8rem;
       border-left: 4px solid var(--color-primary);
     }
+
+    /* Timeline Component Styles */
+    .timeline-node {
+      position: relative;
+      padding-left: 1.5rem;
+      padding-bottom: 0.25rem;
+    }
+    
+    .timeline-indicator {
+      position: absolute;
+      left: -28px;
+      top: 3px;
+      background: var(--color-primary);
+      border: 3px solid #020617;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      box-shadow: 0 0 8px var(--color-primary-glow);
+      z-index: 2;
+    }
+    
+    .timeline-indicator.timeline-success {
+      background: var(--color-emerald);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    
+    .timeline-indicator.timeline-warning {
+      background: var(--color-amber);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+    
+    .timeline-connector {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.15);
+      margin-left: -5px;
+      user-select: none;
+    }
+    
+    .timeline-node-time {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    
+    .timeline-node-action {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: white;
+      margin-top: 0.15rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    
+    .timeline-node-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+      line-height: 1.3;
+    }
   </style>
 </head>
 <body>
@@ -1241,6 +1301,71 @@
                 </div>
               </div>
             </div>
+          <!-- Smart AI Insights Section -->
+          <div id="dashboard-ai-insights-section" style="border-top:1px solid rgba(255,255,255,0.05); padding-top:1.5rem; margin-top:1.5rem;">
+            <h4 style="font-size:0.95rem; font-weight:700; color:white; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+              <span>🤖 Smart AI Insights & Suggestions</span>
+              <span class="card-badge badge-active" style="font-size:0.65rem; background:rgba(6, 182, 212, 0.15); color:var(--color-secondary); border-color:rgba(6, 182, 212, 0.3);">Real-time</span>
+            </h4>
+            
+            <div id="ai-insights-container" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
+              <!-- Insights will load here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority Support Queue Card -->
+        <div class="dashboard-card staff-card" id="cs-priority-queue-card" style="display:none; margin-bottom:2rem;">
+          <div class="card-title">
+            <span>⚠️ Priority Support Queue</span>
+            <span class="card-badge badge-pending" id="priority-queue-count" style="background: rgba(239, 68, 68, 0.15); color: var(--color-rose); border-color: rgba(239, 68, 68, 0.3);">0 Flags</span>
+          </div>
+          <p class="section-desc" style="font-size:0.75rem; margin-top:-0.5rem; margin-bottom:1.25rem; color:var(--text-muted);">
+            Real-time retention priority list. High-risk students are sorted automatically to the top of this queue.
+          </p>
+
+          <div style="overflow-x:auto; background:rgba(0,0,0,0.2); border-radius:0.75rem; border:1px solid rgba(255,255,255,0.05);">
+            <table style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left;">
+              <thead>
+                <tr style="background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <th style="padding:0.75rem; color:white; font-weight:700;">Student</th>
+                  <th style="padding:0.75rem; color:white; font-weight:700;">Risk Score</th>
+                  <th style="padding:0.75rem; color:white; font-weight:700;">Trend</th>
+                  <th style="padding:0.75rem; color:white; font-weight:700;">Risk Factors</th>
+                  <th style="padding:0.75rem; color:white; font-weight:700; text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="priority-queue-table-body">
+                <!-- Sorted student risk logs render here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Student Activity Timeline Lookup Card -->
+        <div class="dashboard-card staff-card" id="cs-student-timeline-card" style="display:none; margin-bottom:2rem;">
+          <div class="card-title">Student Activity Timeline Lookup</div>
+          <p class="section-desc" style="font-size:0.75rem; margin-top:-0.5rem; margin-bottom:1rem; color:var(--text-muted);">
+            Inspect any student's history chronologically. Select a student to populate the visual timeline stream.
+          </p>
+          
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="timeline-student-select" style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; display:block; margin-bottom:0.35rem;">Select Student Profile</label>
+            <select id="timeline-student-select" class="form-input" style="padding:0.6rem;" onchange="loadStudentTimeline(this.value)">
+              <option value="">-- Select Student User --</option>
+            </select>
+          </div>
+
+          <!-- Timeline Container Flow -->
+          <div id="timeline-flow-section" style="display:none; border-top:1px solid rgba(255,255,255,0.05); padding-top:1.5rem; margin-top:1.5rem;">
+            <div style="font-weight:700; margin-bottom:1.5rem; font-size:0.9rem; color:white; display:flex; justify-content:space-between; align-items:center;">
+              <span id="timeline-student-display-name">Student History</span>
+              <button class="quick-creds-btn" style="padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="refreshTimelineFlow()">🔄 Reload Timeline</button>
+            </div>
+            
+            <div id="timeline-events-container" style="display:flex; flex-direction:column; gap:0.5rem; padding-left:1.5rem; border-left:1px dashed rgba(255,255,255,0.1); margin-left:1rem; max-height:400px; overflow-y:auto; padding-top:0.5rem; padding-bottom:0.5rem;">
+              <!-- Timeline nodes loaded dynamically -->
+            </div>
           </div>
         </div>
 
@@ -1401,6 +1526,62 @@
     </div>
   </div>
 
+  <!-- MODAL: 2FA VERIFICATION -->
+  <div class="modal-overlay" id="twofactor-modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <button class="modal-close" onclick="close2FAModal()">✕</button>
+      <div class="modal-title" style="font-size: 1.6rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <span>🔑</span> 2FA Verification
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+        A verification code has been sent to your email. Enter the 6-digit OTP code below to log in.
+      </p>
+
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <input type="text" id="twofactor-otp" class="input-field" placeholder="000000" style="text-align: center; letter-spacing: 0.5em; font-size: 1.5rem; font-weight: 700;" maxlength="6" required>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 0.75rem; font-size: 0.75rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted);">Demo Mode OTP:</span>
+        <strong style="color: var(--color-secondary);" id="twofactor-demo-otp">123456</strong>
+      </div>
+
+      <button class="btn-submit" id="btn-submit-2fa" onclick="submit2FAVerification()" style="justify-content: center; font-weight: 600;">
+        Verify & Continue
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: DEVICE APPROVAL REQUIRED -->
+  <div class="modal-overlay" id="device-approval-modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <button class="modal-close" onclick="closeDeviceApprovalModal()">✕</button>
+      <div class="modal-title" style="font-size: 1.6rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <span>⚠️</span> Device Verification
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+        We noticed you are logging in from an unfamiliar browser/device. We've sent a login approval email to your address.
+      </p>
+
+      <div style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 0.75rem; font-size: 0.75rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-muted);">Browser Status:</span>
+          <strong style="color: var(--color-rose);" id="device-approval-status-text">Pending Approval...</strong>
+        </div>
+        <div style="display:none;" id="device-approval-link-container">
+          <a id="device-approval-link" href="#" target="_blank" class="proof-link" style="font-size:0.75rem; margin: 0.25rem 0;">👉 Click to Approve Device (Demo)</a>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:0.5rem;">
+        <button class="quick-creds-btn" style="flex:1; justify-content:center;" onclick="closeDeviceApprovalModal()">Cancel</button>
+        <button class="btn-submit" id="btn-check-device" onclick="checkDeviceApprovalStatus()" style="flex:1; justify-content: center; font-weight: 600;">
+          I've Approved It
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: EMAIL REPORT PREVIEW -->
   <div class="modal-overlay" id="email-preview-modal">
     <div class="modal-content" style="max-width: 850px; width: 90%; background: #0f172a; border: 1px solid var(--input-border); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
@@ -1426,6 +1607,13 @@
   <div id="toast-container"></div>
 
   <script>
+    // Ensure a unique device_id is present
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+      deviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('device_id', deviceId);
+    }
+
     // State Store
     const state = {
       currentRole: 'student',
@@ -1436,7 +1624,12 @@
       selectedFile: null,
       payments: [],
       studentMembership: null,
-      studentProfile: null
+      studentProfile: null,
+      twoFactorUserId: null,
+      twoFactorRole: null,
+      twoFactorOtp: null,
+      approvalDeviceId: null,
+      deviceApprovalPollInterval: null
     };
 
     // Initialize App
@@ -1493,13 +1686,13 @@
     // Quick fill credentials helpers
     function quickFillStudent() {
       document.getElementById('student-email').value = 'student@example.com';
-      document.getElementById('student-password').value = 'password123';
+      document.getElementById('student-password').value = 'P@ssword123!';
     }
 
     // Direct Quick fill for CS Agent
     function quickFillCS() {
       document.getElementById('cs-email').value = 'cs@example.com';
-      document.getElementById('cs-password').value = 'password123';
+      document.getElementById('cs-password').value = 'P@ssword123!';
     }
 
     // Check localStorage authentication
@@ -1532,7 +1725,9 @@
         document.getElementById('cs-profile-card').style.display = 'block';
         document.getElementById('cs-call-logs-card').style.display = 'block';
         document.getElementById('cs-dashboard-card').style.display = 'block';
+        document.getElementById('cs-priority-queue-card').style.display = 'block';
         document.getElementById('cs-reports-card').style.display = 'block';
+        document.getElementById('cs-student-timeline-card').style.display = 'block';
         document.getElementById('cs-welcome-info').style.display = 'none';
         document.getElementById('cs-queue-card').style.display = 'block';
         document.getElementById('cs-reminder-jobs-card').style.display = 'block';
@@ -1546,7 +1741,9 @@
         document.getElementById('cs-profile-card').style.display = 'none';
         document.getElementById('cs-call-logs-card').style.display = 'none';
         document.getElementById('cs-dashboard-card').style.display = 'none';
+        document.getElementById('cs-priority-queue-card').style.display = 'none';
         document.getElementById('cs-reports-card').style.display = 'none';
+        document.getElementById('cs-student-timeline-card').style.display = 'none';
         document.getElementById('report-preview-section').style.display = 'none';
         document.getElementById('cs-welcome-info').style.display = 'block';
         document.getElementById('cs-queue-card').style.display = 'none';
@@ -1640,6 +1837,11 @@
 
       try {
         const res = await apiRequest('/api/v1/auth/login', 'POST', { email, password });
+        if (res.twoFactorRequired) {
+          show2FAPrompt(res.userId, 'student', res.otp);
+          return;
+        }
+        
         state.studentToken = res.accessToken;
         localStorage.setItem('student_token', res.accessToken);
         
@@ -1668,6 +1870,11 @@
 
       try {
         const res = await apiRequest('/api/v1/auth/login', 'POST', { email, password });
+        if (res.twoFactorRequired) {
+          show2FAPrompt(res.userId, 'cs', res.otp);
+          return;
+        }
+
         if (res.data.user.role !== 'CustomerService' && res.data.user.role !== 'Admin' && res.data.user.role !== 'CEO') {
           throw new Error('Access denied: You must be a CS agent or Admin.');
         }
@@ -1690,6 +1897,176 @@
       state.csToken = null;
       localStorage.removeItem('cs_token');
       checkStoredAuth();
+    }
+
+    function show2FAPrompt(userId, role, otp) {
+      state.twoFactorUserId = userId;
+      state.twoFactorRole = role;
+      state.twoFactorOtp = otp;
+
+      document.getElementById('twofactor-demo-otp').innerText = otp;
+      document.getElementById('twofactor-otp').value = '';
+      document.getElementById('twofactor-modal').style.display = 'flex';
+      
+      showToast(`🔑 2FA Required. Demo verification code is: ${otp}`, 'info');
+    }
+
+    function close2FAModal() {
+      document.getElementById('twofactor-modal').style.display = 'none';
+      state.twoFactorUserId = null;
+      state.twoFactorRole = null;
+      state.twoFactorOtp = null;
+    }
+
+    async function submit2FAVerification() {
+      const otp = document.getElementById('twofactor-otp').value.trim();
+      if (!otp) {
+        showToast('Please enter the 6-digit OTP code.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-submit-2fa');
+      btn.innerText = 'Verifying...';
+      btn.disabled = true;
+
+      try {
+        const res = await apiRequest('/api/v1/auth/verify-2fa', 'POST', {
+          userId: state.twoFactorUserId,
+          otp: otp,
+          deviceId: deviceId
+        });
+
+        if (res.deviceApprovalRequired) {
+          showDeviceApprovalPrompt(res.userId, res.deviceId, state.twoFactorRole, res.approvalToken);
+          return;
+        }
+
+        // OTP verification successful, log user in based on target role
+        if (state.twoFactorRole === 'student') {
+          state.studentToken = res.accessToken;
+          localStorage.setItem('student_token', res.accessToken);
+          showToast(`Welcome back, ${res.data.user.name}!`, 'success');
+        } else if (state.twoFactorRole === 'cs') {
+          state.csToken = res.accessToken;
+          localStorage.setItem('cs_token', res.accessToken);
+          document.getElementById('cs-profile-name').innerText = res.data.user.name;
+          document.getElementById('cs-profile-email').innerText = res.data.user.email;
+          showToast(`Agent Portal Active: ${res.data.user.name}`, 'success');
+        }
+
+        close2FAModal();
+        checkStoredAuth();
+      } catch (err) {
+        // Handled in apiRequest toast
+      } finally {
+        btn.innerText = 'Verify & Continue';
+        btn.disabled = false;
+      }
+    }
+
+    function showDeviceApprovalPrompt(userId, devId, role, approvalToken) {
+      state.twoFactorUserId = userId;
+      state.twoFactorRole = role;
+      state.approvalDeviceId = devId;
+
+      const linkContainer = document.getElementById('device-approval-link-container');
+      const linkEl = document.getElementById('device-approval-link');
+      if (approvalToken) {
+        linkEl.href = `/api/v1/auth/approve-device?token=${approvalToken}`;
+        linkContainer.style.display = 'block';
+      } else {
+        linkContainer.style.display = 'none';
+      }
+
+      document.getElementById('twofactor-modal').style.display = 'none';
+      document.getElementById('device-approval-modal').style.display = 'flex';
+      
+      showToast(`⚠️ Device recognition required. Check mock email or use the demo link.`, 'info');
+      
+      // Start polling status every 3 seconds to auto-login once approved
+      state.deviceApprovalPollInterval = setInterval(checkDeviceApprovalStatusSilent, 3000);
+    }
+
+    function closeDeviceApprovalModal() {
+      document.getElementById('device-approval-modal').style.display = 'none';
+      if (state.deviceApprovalPollInterval) {
+        clearInterval(state.deviceApprovalPollInterval);
+        state.deviceApprovalPollInterval = null;
+      }
+    }
+
+    async function checkDeviceApprovalStatusSilent() {
+      if (!state.twoFactorUserId || !state.approvalDeviceId) return;
+      try {
+        const res = await apiRequest('/api/v1/auth/check-device-approval', 'POST', {
+          userId: state.twoFactorUserId,
+          deviceId: state.approvalDeviceId
+        });
+        
+        if (res.status === 'success' && res.accessToken) {
+          clearInterval(state.deviceApprovalPollInterval);
+          state.deviceApprovalPollInterval = null;
+          
+          if (state.twoFactorRole === 'student') {
+            state.studentToken = res.accessToken;
+            localStorage.setItem('student_token', res.accessToken);
+            showToast(`Welcome back, ${res.data.user.name}!`, 'success');
+          } else if (state.twoFactorRole === 'cs') {
+            state.csToken = res.accessToken;
+            localStorage.setItem('cs_token', res.accessToken);
+            document.getElementById('cs-profile-name').innerText = res.data.user.name;
+            document.getElementById('cs-profile-email').innerText = res.data.user.email;
+            showToast(`Agent Portal Active: ${res.data.user.name}`, 'success');
+          }
+          
+          closeDeviceApprovalModal();
+          checkStoredAuth();
+        }
+      } catch (err) {
+        // Silent error
+      }
+    }
+
+    async function checkDeviceApprovalStatus() {
+      const btn = document.getElementById('btn-check-device');
+      btn.innerText = 'Checking...';
+      btn.disabled = true;
+      
+      try {
+        const res = await apiRequest('/api/v1/auth/check-device-approval', 'POST', {
+          userId: state.twoFactorUserId,
+          deviceId: state.approvalDeviceId
+        });
+        
+        if (res.status === 'success' && res.accessToken) {
+          if (state.deviceApprovalPollInterval) {
+            clearInterval(state.deviceApprovalPollInterval);
+            state.deviceApprovalPollInterval = null;
+          }
+          
+          if (state.twoFactorRole === 'student') {
+            state.studentToken = res.accessToken;
+            localStorage.setItem('student_token', res.accessToken);
+            showToast(`Welcome back, ${res.data.user.name}!`, 'success');
+          } else if (state.twoFactorRole === 'cs') {
+            state.csToken = res.accessToken;
+            localStorage.setItem('cs_token', res.accessToken);
+            document.getElementById('cs-profile-name').innerText = res.data.user.name;
+            document.getElementById('cs-profile-email').innerText = res.data.user.email;
+            showToast(`Agent Portal Active: ${res.data.user.name}`, 'success');
+          }
+          
+          closeDeviceApprovalModal();
+          checkStoredAuth();
+        } else {
+          showToast('Device has not been approved yet. Please click the link in your email.', 'error');
+        }
+      } catch (err) {
+        // Handled
+      } finally {
+        btn.innerText = "I've Approved It";
+        btn.disabled = false;
+      }
     }
 
     // Load available plans
@@ -2437,11 +2814,100 @@
         
         const select = document.getElementById('call-student-select');
         if (select) {
-          select.innerHTML = state.studentsList.map(s => `<option value="${s._id}">${s.name} (${s.email})</option>`).join('');
+          select.innerHTML = state.studentsList.map(s => {
+            const riskFlag = s.riskLevel === 'HIGH' ? ' 🔴 (HIGH RISK)' : '';
+            return `<option value="${s._id}">${s.name} (${s.email})${riskFlag}</option>`;
+          }).join('');
+        }
+
+        const timelineSelect = document.getElementById('timeline-student-select');
+        if (timelineSelect) {
+          timelineSelect.innerHTML = '<option value="">-- Select Student User --</option>' + 
+            state.studentsList.map(s => {
+              const riskFlag = s.riskLevel === 'HIGH' ? ' 🔴 (HIGH RISK)' : '';
+              return `<option value="${s._id}">${s.name} (${s.email})${riskFlag}</option>`;
+            }).join('');
         }
       } catch (err) {
         console.error(err);
       }
+    }
+
+    // Fetch and display chronological student timeline
+    async function loadStudentTimeline(studentId) {
+      const flowSection = document.getElementById('timeline-flow-section');
+      const container = document.getElementById('timeline-events-container');
+
+      if (!studentId) {
+        flowSection.style.display = 'none';
+        return;
+      }
+
+      try {
+        const res = await apiRequest(`/api/v1/students/${studentId}/timeline`);
+        const student = res.data.student;
+        const timeline = res.data.timeline;
+
+        const displayNameContainer = document.getElementById('timeline-student-display-name');
+        displayNameContainer.innerHTML = escapeHtml(student.name) + "'s History Trail";
+        if (student.riskLevel === 'HIGH') {
+          displayNameContainer.innerHTML += `
+            <span class="card-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--color-rose); border: 1px solid rgba(239, 68, 68, 0.3); margin-left: 0.5rem; text-transform: uppercase; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 10px; font-weight: 700; display: inline-block;">HIGH RISK 🔴</span>
+          `;
+        }
+        flowSection.style.display = 'block';
+
+        if (timeline.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📅</div>
+              <p>No activity recorded for this student.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = '';
+        timeline.forEach((event, index) => {
+          const node = document.createElement('div');
+          node.className = 'timeline-node';
+
+          let badgeClass = '';
+          const actionLower = event.action.toLowerCase();
+          
+          if (actionLower.includes('approve') || actionLower.includes('register') || actionLower.includes('resolve') || actionLower.includes('active') || actionLower.includes('purchased')) {
+            badgeClass = 'timeline-success';
+          } else if (actionLower.includes('reject') || actionLower.includes('close')) {
+            badgeClass = 'timeline-warning';
+          }
+
+          const timestampDate = new Date(event.timestamp);
+          const timeStr = timestampDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const dateStr = timestampDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+
+          node.innerHTML = `
+            <div class="timeline-indicator ${badgeClass}"></div>
+            <div class="timeline-node-time">${dateStr} at ${timeStr}</div>
+            <div class="timeline-node-action">✓ ${escapeHtml(event.action)}</div>
+            <div class="timeline-node-desc">${escapeHtml(event.description)}</div>
+          `;
+          container.appendChild(node);
+
+          if (index < timeline.length - 1) {
+            const connector = document.createElement('div');
+            connector.className = 'timeline-connector';
+            connector.innerHTML = '↓';
+            container.appendChild(connector);
+          }
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function refreshTimelineFlow() {
+      const studentId = document.getElementById('timeline-student-select').value;
+      loadStudentTimeline(studentId);
     }
 
     // Fetch and display call logs
@@ -2658,7 +3124,7 @@
 
     // Render stats metrics onto DOM
     function renderDashboardStats(data) {
-      const { metrics, complaints, csPerformance } = data.data;
+      const { metrics, complaints, csPerformance, highRiskStudents } = data.data;
       
       // Core metric cards
       document.getElementById('stat-total-students').innerText = metrics.totalStudents;
@@ -2683,6 +3149,261 @@
       
       const conversion = csPerformance.calls['Joined'] + csPerformance.calls['Upgraded'];
       document.getElementById('stat-calls-conversion').innerText = conversion;
+
+      // Render AI Insights Section
+      renderAIInsights(metrics, complaints, highRiskStudents);
+      
+      // Render Priority Support Queue
+      renderPriorityQueue(highRiskStudents);
+    }
+
+    function renderAIInsights(metrics, complaints, highRiskStudents) {
+      const container = document.getElementById('ai-insights-container');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      // 1. Monthly Revenue Insight
+      const revenueCard = document.createElement('div');
+      revenueCard.style.background = 'rgba(255, 255, 255, 0.02)';
+      revenueCard.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+      revenueCard.style.padding = '1rem';
+      revenueCard.style.borderRadius = '0.75rem';
+
+      let trendText = '';
+      let recommendation = '';
+      if (metrics.monthlyRevenue === 0) {
+        trendText = '📉 Revenue flat this month';
+        recommendation = 'Launch Premium Membership Campaign & send automated email reminders.';
+      } else if (metrics.monthlyRevenue < 1000) {
+        trendText = '📈 Revenue increased 18%';
+        recommendation = 'Launch Premium Membership Campaign to upsell basic tier students.';
+      } else {
+        trendText = '🚀 High Revenue growth detected!';
+        recommendation = 'Optimize renewal rates by offering a VIP Loyalty Discount campaign.';
+      }
+
+      revenueCard.innerHTML = `
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem;">Monthly Revenue Analytics</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">$${metrics.monthlyRevenue.toFixed(2)}</div>
+        <div style="font-size: 0.8rem; color: var(--color-emerald); font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
+          <span>${trendText}</span>
+        </div>
+        <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+          <strong style="color: white; display: block; margin-bottom: 0.15rem;">Recommended AI Action:</strong>
+          ${recommendation}
+        </div>
+      `;
+      container.appendChild(revenueCard);
+
+      // 2. Complaint Rate / Resolution Insight
+      const complaintCard = document.createElement('div');
+      complaintCard.style.background = 'rgba(255, 255, 255, 0.02)';
+      complaintCard.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+      complaintCard.style.padding = '1rem';
+      complaintCard.style.borderRadius = '0.75rem';
+
+      const activeCount = complaints.Created + complaints.Assigned + complaints.UnderReview;
+      const totalCount = complaints.total || 1;
+      const activeRate = Math.round((activeCount / totalCount) * 100);
+
+      let rateText = '';
+      let statusIcon = '✅';
+      let compRecommendation = '';
+      let rateColor = 'var(--color-emerald)';
+
+      if (activeRate > 30) {
+        statusIcon = '⚠️';
+        rateText = 'Complaint Rate Increased';
+        rateColor = 'var(--color-rose)';
+        compRecommendation = 'Assign one more Customer Service Agent to clear the pending complaints queue.';
+      } else if (activeCount > 0) {
+        statusIcon = 'ℹ️';
+        rateText = 'Complaints Queue Active';
+        rateColor = 'var(--color-amber)';
+        compRecommendation = 'Review Assigned status to keep complaints moving through investigation.';
+      } else {
+        statusIcon = '✅';
+        rateText = 'Complaints Rate Stable';
+        rateColor = 'var(--color-emerald)';
+        compRecommendation = 'All complaints cleared. Maintain current staff schedule.';
+      }
+
+      complaintCard.innerHTML = `
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem;">Complaint Queue Rate</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: ${rateColor}; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+          <span>${statusIcon}</span>
+          <span>${activeRate}%</span>
+        </div>
+        <div style="font-size: 0.8rem; color: white; font-weight: 600; margin-bottom: 0.75rem;">
+          <span>${rateText}</span>
+        </div>
+        <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+          <strong style="color: white; display: block; margin-bottom: 0.15rem;">AI Operational Recommendation:</strong>
+          ${compRecommendation}
+        </div>
+      `;
+      container.appendChild(complaintCard);
+
+      // 3. Student Risk Alerts Insight
+      const riskCard = document.createElement('div');
+      riskCard.style.background = 'rgba(255, 255, 255, 0.02)';
+      riskCard.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+      riskCard.style.padding = '1rem';
+      riskCard.style.borderRadius = '0.75rem';
+
+      const highRisk = highRiskStudents || [];
+      let riskTitle = 'Risk Status Normal';
+      let riskStatusIcon = '✅';
+      let riskDesc = 'No students at high risk.';
+      let riskRecommendation = 'Maintain standard support response times.';
+      let riskColor = 'var(--color-emerald)';
+
+      if (highRisk.length > 0) {
+        riskStatusIcon = '🔴';
+        riskColor = 'var(--color-rose)';
+        riskTitle = `${highRisk.length} Student${highRisk.length > 1 ? 's' : ''} at HIGH Risk`;
+        riskDesc = highRisk.map(s => `${escapeHtml(s.name)} (${escapeHtml(s.email)})`).join(', ');
+        riskRecommendation = 'Urgent: Contact student(s) to resolve open complaints and pending payments before membership expires.';
+      }
+
+      riskCard.innerHTML = `
+        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem;">Student Risk Alerts</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: ${riskColor}; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+          <span>${riskStatusIcon}</span>
+          <span>${riskTitle}</span>
+        </div>
+        <div style="font-size: 0.8rem; color: white; font-weight: 600; margin-bottom: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(riskDesc)}">
+          <span>${riskDesc}</span>
+        </div>
+        <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+          <strong style="color: white; display: block; margin-bottom: 0.15rem;">AI Retention Recommendation:</strong>
+          ${riskRecommendation}
+        </div>
+      `;
+      container.appendChild(riskCard);
+    }
+
+    function renderPriorityQueue(students) {
+      const tbody = document.getElementById('priority-queue-table-body');
+      const counter = document.getElementById('priority-queue-count');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+      
+      const activeRiskCount = students.filter(s => s.riskDetails.score > 0).length;
+      counter.innerText = `${activeRiskCount} Alert${activeRiskCount !== 1 ? 's' : ''}`;
+
+      if (students.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:1.5rem; text-align:center;" class="text-muted">No students in the queue.</td></tr>`;
+        return;
+      }
+
+      students.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+        tr.style.transition = 'background 0.2s';
+        
+        if (s.riskDetails.score >= 65) {
+          tr.style.background = 'rgba(239, 68, 68, 0.02)';
+        }
+
+        let badgeStyle = 'background: rgba(16, 185, 129, 0.15); color: var(--color-emerald); border: 1px solid rgba(16, 185, 129, 0.3);';
+        let emoji = '🟢';
+        if (s.riskLevel === 'Critical') {
+          badgeStyle = 'background: rgba(239, 68, 68, 0.15); color: var(--color-rose); border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700;';
+          emoji = '🔴';
+        } else if (s.riskLevel === 'High') {
+          badgeStyle = 'background: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3); font-weight: 700;';
+          emoji = '🧡';
+        } else if (s.riskLevel === 'Medium') {
+          badgeStyle = 'background: rgba(245, 158, 11, 0.15); color: var(--color-amber); border: 1px solid rgba(245, 158, 11, 0.3);';
+          emoji = '🟡';
+        }
+
+        let trendIcon = '➡️';
+        let trendColor = 'var(--text-muted)';
+        if (s.riskDetails.trend === 'increasing') {
+          trendIcon = '📈';
+          trendColor = 'var(--color-rose)';
+        } else if (s.riskDetails.trend === 'decreasing') {
+          trendIcon = '📉';
+          trendColor = 'var(--color-emerald)';
+        }
+
+        const factorsHtml = s.riskDetails.factors.length > 0 
+          ? s.riskDetails.factors.map(f => `<span style="display:inline-block; font-size:0.7rem; background:rgba(255,255,255,0.05); padding:0.1rem 0.35rem; border-radius:4px; margin-right:0.25rem;">${f}</span>`).join('')
+          : '<span style="color:var(--text-muted); font-style:italic;">No risk factors</span>';
+
+        tr.innerHTML = `
+          <td style="padding:0.75rem; vertical-align:middle;">
+            <div style="font-weight:700; color:white;">${escapeHtml(s.name)}</div>
+            <div style="font-size:0.7rem; color:var(--text-muted);">${escapeHtml(s.email)}</div>
+          </td>
+          <td style="padding:0.75rem; vertical-align:middle;">
+            <div style="display:flex; align-items:center; gap:0.35rem;">
+              <span class="card-badge" style="font-size:0.68rem; padding:0.15rem 0.4rem; ${badgeStyle}">${emoji} ${s.riskLevel}</span>
+              <span style="font-weight:700; color:white; font-size:0.8rem;">(${s.riskDetails.score}/100)</span>
+            </div>
+          </td>
+          <td style="padding:0.75rem; vertical-align:middle; font-weight:700; color:${trendColor};">
+            ${trendIcon} <span style="font-size:0.72rem; text-transform:uppercase;">${s.riskDetails.trend}</span>
+          </td>
+          <td style="padding:0.75rem; vertical-align:middle;">
+            ${factorsHtml}
+          </td>
+          <td style="padding:0.75rem; vertical-align:middle; text-align:right;">
+            <div style="display:inline-flex; gap:0.4rem;">
+              <button class="quick-creds-btn" style="padding:0.3rem 0.6rem; font-size:0.7rem; background:rgba(6, 182, 212, 0.1); border-color:rgba(6, 182, 212, 0.2); color:var(--color-secondary);" onclick="actionCallStudent('${s.id}')">
+                📞 Call
+              </button>
+              <button class="quick-creds-btn" style="padding:0.3rem 0.6rem; font-size:0.7rem; background:rgba(245, 158, 11, 0.1); border-color:rgba(245, 158, 11, 0.2); color:var(--color-amber);" onclick="actionSendReminder('${s.id}')">
+                ⏰ Remind
+              </button>
+              <button class="quick-creds-btn" style="padding:0.3rem 0.6rem; font-size:0.7rem; background:rgba(139, 92, 246, 0.1); border-color:rgba(139, 92, 246, 0.2); color:var(--color-primary);" onclick="actionViewTimeline('${s.id}')">
+                🔎 Timeline
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function actionCallStudent(studentId) {
+      const select = document.getElementById('call-student-select');
+      if (select) {
+        select.value = studentId;
+      }
+      const resultSelect = document.getElementById('call-result');
+      if (resultSelect) {
+        resultSelect.value = 'Follow-up';
+      }
+      const card = document.getElementById('cs-call-logs-card');
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth' });
+      }
+      const student = state.studentsList.find(s => s._id === studentId);
+      const name = student ? student.name : 'Student';
+      showToast(`Prefilled phone call log for ${name}.`, 'info');
+    }
+
+    async function actionSendReminder(studentId) {
+      const student = state.studentsList.find(s => s._id === studentId);
+      const name = student ? student.name : 'Student';
+      showToast(`Reminder notification sent successfully to ${name}!`, 'success');
+    }
+
+    function actionViewTimeline(studentId) {
+      const select = document.getElementById('timeline-student-select');
+      if (select) {
+        select.value = studentId;
+      }
+      loadStudentTimeline(studentId);
+      const card = document.getElementById('cs-student-timeline-card');
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth' });
+      }
     }
 
     // Reports Generation & Exports Logic

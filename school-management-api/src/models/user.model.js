@@ -23,7 +23,17 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Please provide a password'],
-      minlength: [8, 'Password must be at least 8 characters long'],
+      minlength: [10, 'Password must be at least 10 characters long'],
+      validate: {
+        validator: function (val) {
+          const hasUpperCase = /[A-Z]/.test(val);
+          const hasLowerCase = /[a-z]/.test(val);
+          const hasNumber = /[0-9]/.test(val);
+          const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+          return hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+        },
+        message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+      },
       select: false,
     },
     role: {
@@ -39,6 +49,42 @@ const userSchema = new mongoose.Schema(
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,
+    twoFactorOTP: String,
+    twoFactorOTPExpires: Date,
+    devices: [
+      {
+        deviceId: {
+          type: String,
+          required: true,
+        },
+        browserName: String,
+        os: String,
+        ipAddress: String,
+        approved: {
+          type: Boolean,
+          default: false,
+        },
+        approvedAt: Date,
+        lastUsedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        approvalToken: String,
+        approvalTokenExpires: Date,
+      },
+    ],
+    activeRefreshTokens: [
+      {
+        jti: {
+          type: String,
+          required: true,
+        },
+        expiresAt: {
+          type: Date,
+          required: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -54,11 +100,12 @@ userSchema.pre('save', async function () {
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-// Update passwordChangedAt property before saving
+// Update passwordChangedAt property before saving and revoke all active refresh tokens
 userSchema.pre('save', function () {
   if (!this.isModified('password') || this.isNew) return;
 
   this.passwordChangedAt = Date.now() - 1000; // Subtract 1s to ensure token creation time is after passwordChangedAt
+  this.activeRefreshTokens = []; // Revoke all sessions on password change
 });
 
 // Instance method to compare candidate password with password hash

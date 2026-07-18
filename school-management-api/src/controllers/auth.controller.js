@@ -22,23 +22,28 @@ const signAccessToken = (id) => {
   });
 };
 
-// Generate refresh tokens (long-lived)
-const signRefreshToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, {
+// Generate refresh tokens (long-lived) with JTI for rotation tracking
+const signRefreshToken = (id, jti) => {
+  return jwt.sign({ id, jti }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: process.env.REFRESH_EXPIRE || '7d',
   });
 };
 
 // Standard response helper to set HTTP-only cookie and send response
-const sendTokensResponse = (user, statusCode, res) => {
+const sendTokensResponse = async (user, statusCode, res) => {
   const accessToken = signAccessToken(user._id);
-  const refreshToken = signRefreshToken(user._id);
+  const jti = crypto.randomBytes(16).toString('hex');
+  const refreshToken = signRefreshToken(user._id, jti);
+
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+  // Track active refresh token
+  user.activeRefreshTokens.push({ jti, expiresAt });
+  await user.save({ validateBeforeSave: false });
 
   // Cookie security options for Refresh Token
   const cookieOptions = {
-    expires: new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000 // Default 7 days
-    ),
+    expires: expiresAt,
     httpOnly: true, // Safeguards against XSS
     secure: process.env.NODE_ENV === 'production', // Require HTTPS in production
     sameSite: 'lax', // CSRF mitigation
@@ -79,7 +84,7 @@ const register = catchAsync(async (req, res, next) => {
     role: 'Student',
   });
 
-  sendTokensResponse(newUser, 201, res);
+  await sendTokensResponse(newUser, 201, res);
 });
 
 /**
@@ -102,17 +107,373 @@ const login = catchAsync(async (req, res, next) => {
     return next(new AppError('Your account is deactivated. Please contact support.', 401));
   }
 
-  // Log User Login action to database audit logs
+  // Generate a random 6-digit OTP
+  const otp = crypto.randomInt(100000, 999999).toString();
+  
+  user.twoFactorOTP = otp;
+  user.twoFactorOTPExpires = Date.now() + 5 * 60 * 1000; // 5 mins
+  await user.save({ validateBeforeSave: false });
+
+  // Send mock email
+  await sendEmail({
+    email: user.email,
+    subject: 'Your 2FA Verification Code',
+    message: `Your login verification code is: ${otp}. This code is valid for 5 minutes.`
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'OTP sent to email. Please verify 2FA.',
+    twoFactorRequired: true,
+    userId: user._id,
+    email: user.email,
+    otp, // returned to allow seamless frontend pre-fill and visual testing!
+  });
+});
+
+// Helper to parse user agent for browser and OS recognition
+const parseUserAgent = (userAgentString) => {
+  let browser = 'Unknown Browser';
+  let os = 'Unknown OS';
+
+  if (!userAgentString) return { browser, os };
+
+  // Parse browser
+  if (userAgentString.includes('Firefox')) {
+    browser = 'Firefox';
+  } else if (userAgentString.includes('Chrome') && !userAgentString.includes('Chromium') && !userAgentString.includes('Edg')) {
+    browser = 'Chrome';
+  } else if (userAgentString.includes('Safari') && !userAgentString.includes('Chrome')) {
+    browser = 'Safari';
+  } else if (userAgentString.includes('Edg')) {
+    browser = 'Edge';
+  } else if (userAgentString.includes('MSIE') || userAgentString.includes('Trident')) {
+    browser = 'Internet Explorer';
+  }
+
+  // Parse OS
+  if (userAgentString.includes('Windows')) {
+    os = 'Windows';
+  } else if (userAgentString.includes('Macintosh') || userAgentString.includes('Mac OS')) {
+    os = 'macOS';
+  } else if (userAgentString.includes('Linux')) {
+    os = 'Linux';
+  } else if (userAgentString.includes('Android')) {
+    os = 'Android';
+  } else if (userAgentString.includes('like Mac OS X')) {
+    os = 'iOS';
+  }
+
+  return { browser, os };
+};
+
+/**
+ * @route   POST /api/v1/auth/verify-2fa
+ * @desc    Verify 2FA OTP and return tokens
+ * @access  Public
+ */
+const verify2FA = catchAsync(async (req, res, next) => {
+  const { userId, otp, deviceId } = req.body;
+
+  if (!userId || !otp) {
+    return next(new AppError('Please provide user ID and verification code', 400));
+  }
+
+  const user = await User.findById(userId).select('+active');
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  if (user.active === false) {
+    return next(new AppError('Your account has been deactivated.', 401));
+  }
+
+  if (!user.twoFactorOTP || user.twoFactorOTP !== otp || user.twoFactorOTPExpires < Date.now()) {
+    return next(new AppError('Invalid or expired verification code', 400));
+  }
+
+  // Clear OTP fields
+  user.twoFactorOTP = undefined;
+  user.twoFactorOTPExpires = undefined;
+
+  const userAgentString = req.headers['user-agent'] || '';
+  const { browser, os } = parseUserAgent(userAgentString);
+  const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+
+  // --- DEVICE RECOGNITION SYSTEM ---
+  if (deviceId) {
+    let device = user.devices.find(d => d.deviceId === deviceId);
+
+    if (device) {
+      if (device.approved) {
+        // Device recognized and approved
+        device.lastUsedAt = Date.now();
+        device.ipAddress = ipAddress;
+        await user.save({ validateBeforeSave: false });
+
+        await logAction({
+          userId: user._id,
+          userEmail: user.email,
+          action: 'User Login',
+          module: 'Auth',
+          ipAddress,
+          details: `User completed 2FA login successfully from recognized device: ${browser} on ${os} (Role: ${user.role})`
+        });
+
+        sendTokensResponse(user, 200, res);
+        return;
+      } else {
+        // Device exists but pending approval (regenerate token and re-send email)
+        const approvalToken = crypto.randomBytes(32).toString('hex');
+        device.approvalToken = approvalToken;
+        device.approvalTokenExpires = Date.now() + 10 * 60 * 1000; // 10 mins
+        device.ipAddress = ipAddress;
+        
+        await user.save({ validateBeforeSave: false });
+
+        const approvalLink = `${req.protocol}://${req.get('host')}/api/v1/auth/approve-device?token=${approvalToken}`;
+
+        await sendEmail({
+          email: user.email,
+          subject: 'New login detected',
+          message: `We detected a login attempt to your account from a new device / browser:
+- Browser: ${browser}
+- OS: ${os}
+- IP Address: ${ipAddress}
+- Date: ${new Date().toLocaleString()}
+
+Please approve this device by clicking the link below:
+${approvalLink}
+
+If this was not you, please secure your account immediately.`
+        });
+
+        await Notification.create({
+          user: user._id,
+          title: 'Unrecognized Device Login',
+          message: `A login was attempted from an unrecognized device (${browser} on ${os}). Verification email sent.`,
+          type: 'device_unrecognized'
+        });
+
+        res.status(200).json({
+          status: 'success',
+          deviceApprovalRequired: true,
+          userId: user._id,
+          deviceId: deviceId,
+          approvalToken,
+          message: 'Device approval required. An email has been sent to verify this device.'
+        });
+        return;
+      }
+    } else {
+      // Completely new device
+      const approvalToken = crypto.randomBytes(32).toString('hex');
+      
+      user.devices.push({
+        deviceId,
+        browserName: browser,
+        os,
+        ipAddress,
+        approved: false,
+        approvalToken,
+        approvalTokenExpires: Date.now() + 10 * 60 * 1000
+      });
+
+      await user.save({ validateBeforeSave: false });
+
+      const approvalLink = `${req.protocol}://${req.get('host')}/api/v1/auth/approve-device?token=${approvalToken}`;
+
+      await sendEmail({
+        email: user.email,
+        subject: 'New login detected',
+        message: `We detected a login attempt to your account from a new device / browser:
+- Browser: ${browser}
+- OS: ${os}
+- IP Address: ${ipAddress}
+- Date: ${new Date().toLocaleString()}
+
+Please approve this device by clicking the link below:
+${approvalLink}
+
+If this was not you, please secure your account immediately.`
+      });
+
+      await Notification.create({
+        user: user._id,
+        title: 'Unrecognized Device Login',
+        message: `A login was attempted from an unrecognized device (${browser} on ${os}). Verification email sent.`,
+        type: 'device_unrecognized'
+      });
+
+      await logAction({
+        userId: user._id,
+        userEmail: user.email,
+        action: 'Unrecognized Device Login Attempt',
+        module: 'Auth',
+        ipAddress,
+        details: `Login attempted from unrecognized device: ${browser} on ${os}. Approval email dispatched.`
+      });
+
+      res.status(200).json({
+        status: 'success',
+        deviceApprovalRequired: true,
+        userId: user._id,
+        deviceId: deviceId,
+        approvalToken,
+        message: 'Device approval required. An email has been sent to verify this device.'
+      });
+      return;
+    }
+  }
+
+  // Fallback
+  await user.save({ validateBeforeSave: false });
+
   await logAction({
     userId: user._id,
     userEmail: user.email,
     action: 'User Login',
     module: 'Auth',
-    ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-    details: `User logged in successfully (Role: ${user.role})`
+    ipAddress,
+    details: `User completed 2FA login successfully without device tracking (Role: ${user.role})`
   });
 
   sendTokensResponse(user, 200, res);
+});
+
+/**
+ * @route   GET /api/v1/auth/approve-device
+ * @desc    Approve a device using the approval token sent via email
+ * @access  Public
+ */
+const approveDevice = catchAsync(async (req, res, next) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return next(new AppError('Device approval token is missing', 400));
+  }
+
+  const user = await User.findOne({
+    'devices.approvalToken': token,
+    'devices.approvalTokenExpires': { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res.status(400).send(`
+      <html>
+        <head>
+          <title>Device Approval Failed</title>
+          <style>
+            body { font-family: 'Outfit', 'Segoe UI', Arial, sans-serif; background: radial-gradient(circle at top, #0f172a 0%, #020617 100%); color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+            .card { background: rgba(30, 41, 59, 0.4); padding: 2.5rem; border-radius: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.05); text-align: center; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(16px); }
+            h1 { color: #ef4444; margin-top: 0; font-size: 1.8rem; }
+            p { color: #94a3b8; line-height: 1.5; font-size: 0.95rem; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>❌ Approval Failed</h1>
+            <p>The device approval link is invalid or has expired. Please try logging in again to request a new link.</p>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+
+  const device = user.devices.find(d => d.approvalToken === token);
+  if (device) {
+    device.approved = true;
+    device.approvedAt = Date.now();
+    device.approvalToken = undefined;
+    device.approvalTokenExpires = undefined;
+  }
+
+  await user.save({ validateBeforeSave: false });
+
+  await logAction({
+    userId: user._id,
+    userEmail: user.email,
+    action: 'Approve Device',
+    module: 'Auth',
+    ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    details: `Device approved successfully: ${device ? device.browserName : 'Unknown'} on ${device ? device.os : 'Unknown'}`
+  });
+
+  // Create an in-app notification about successful approval
+  await Notification.create({
+    user: user._id,
+    title: 'Device Approved',
+    message: `New device recognized and approved successfully (${device ? device.browserName : 'Unknown'} on ${device ? device.os : 'Unknown'}).`,
+    type: 'device_approved'
+  });
+
+  return res.status(200).send(`
+    <html>
+      <head>
+        <title>Device Approved Successfully</title>
+        <style>
+          body { font-family: 'Outfit', 'Segoe UI', Arial, sans-serif; background: radial-gradient(circle at top, #0f172a 0%, #020617 100%); color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+          .card { background: rgba(30, 41, 59, 0.4); padding: 2.5rem; border-radius: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.05); text-align: center; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); backdrop-filter: blur(16px); }
+          h1 { color: #10b981; margin-top: 0; font-size: 1.8rem; }
+          p { color: #94a3b8; line-height: 1.5; font-size: 0.95rem; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>✅ Device Approved!</h1>
+          <p>Your browser/device has been successfully recognized. You can now return to the login screen, where you will be automatically logged in.</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
+/**
+ * @route   POST /api/v1/auth/check-device-approval
+ * @desc    Check if a device has been approved, and if so, issue tokens
+ * @access  Public
+ */
+const checkDeviceApproval = catchAsync(async (req, res, next) => {
+  const { userId, deviceId } = req.body;
+
+  if (!userId || !deviceId) {
+    return next(new AppError('Please provide user ID and device ID', 400));
+  }
+
+  const user = await User.findById(userId).select('+active');
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  if (user.active === false) {
+    return next(new AppError('Your account has been deactivated.', 401));
+  }
+
+  const device = user.devices.find(d => d.deviceId === deviceId);
+  if (!device) {
+    return next(new AppError('Device not found', 404));
+  }
+
+  if (!device.approved) {
+    return res.status(200).json({
+      status: 'fail',
+      deviceApproved: false,
+      message: 'Device is still pending approval. Please check your email.',
+    });
+  }
+
+  const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+
+  await logAction({
+    userId: user._id,
+    userEmail: user.email,
+    action: 'User Login',
+    module: 'Auth',
+    ipAddress,
+    details: `User completed login from recognized device (Role: ${user.role})`
+  });
+
+  await sendTokensResponse(user, 200, res);
 });
 
 /**
@@ -120,7 +481,23 @@ const login = catchAsync(async (req, res, next) => {
  * @desc    Logout user and clear refresh token cookie
  * @access  Public
  */
-const logout = (req, res) => {
+const logout = catchAsync(async (req, res, next) => {
+  const token = req.cookies.refreshToken;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+      const user = await User.findById(decoded.id);
+      if (user) {
+        // Remove the specific JTI from active list
+        user.activeRefreshTokens = user.activeRefreshTokens.filter(rt => rt.jti !== decoded.jti);
+        await user.save({ validateBeforeSave: false });
+      }
+    } catch (err) {
+      // Ignore token verification errors during logout
+    }
+  }
+
   res.cookie('refreshToken', 'loggedout', {
     expires: new Date(Date.now() + 5 * 1000), // Expire immediately
     httpOnly: true,
@@ -130,7 +507,7 @@ const logout = (req, res) => {
     status: 'success',
     message: 'Logged out successfully',
   });
-};
+});
 
 /**
  * @route   POST /api/v1/auth/refresh-token
@@ -168,8 +545,61 @@ const refreshToken = catchAsync(async (req, res, next) => {
     return next(new AppError('User recently changed password! Please log in again.', 401));
   }
 
+  // --- REUSE DETECTION & ROTATION SYSTEM ---
+  const tokenJti = decoded.jti;
+  
+  // Find the token index in user's activeRefreshTokens
+  const tokenIndex = currentUser.activeRefreshTokens.findIndex(rt => rt.jti === tokenJti);
+
+  if (tokenIndex === -1) {
+    // REUSE DETECTED!
+    currentUser.activeRefreshTokens = [];
+    await currentUser.save({ validateBeforeSave: false });
+
+    // Log the security breach
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    await logAction({
+      userId: currentUser._id,
+      userEmail: currentUser.email,
+      action: 'Refresh Token Reuse Detected',
+      module: 'Auth',
+      ipAddress,
+      details: `Potential token reuse attack! All active sessions revoked for user: ${currentUser.email}.`
+    });
+
+    // Clear refresh token cookie
+    res.cookie('refreshToken', 'loggedout', {
+      expires: new Date(Date.now() + 5 * 1000),
+      httpOnly: true,
+    });
+
+    return next(new AppError('Potential token reuse detected. All sessions have been revoked. Please log in again.', 401));
+  }
+
+  // Remove the used refresh token from the active list
+  currentUser.activeRefreshTokens.splice(tokenIndex, 1);
+
+  // Generate new JTI and new Refresh Token
+  const newJti = crypto.randomBytes(16).toString('hex');
+  const newRefreshToken = signRefreshToken(currentUser._id, newJti);
+
+  // Push new token to active list
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  currentUser.activeRefreshTokens.push({ jti: newJti, expiresAt });
+  await currentUser.save({ validateBeforeSave: false });
+
   // Sign and return a new short-lived Access Token
   const accessToken = signAccessToken(currentUser._id);
+
+  // Send the new rotated Refresh Token in cookie
+  const cookieOptions = {
+    expires: expiresAt,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  };
+
+  res.cookie('refreshToken', newRefreshToken, cookieOptions);
 
   res.status(200).json({
     status: 'success',
@@ -256,7 +686,7 @@ const resetPassword = catchAsync(async (req, res, next) => {
   await user.save();
 
   // 4) Login and send fresh authentication response
-  sendTokensResponse(user, 200, res);
+  await sendTokensResponse(user, 200, res);
 });
 const seedDatabase = catchAsync(async (req, res, next) => {
   // 1) Clear existing data
@@ -302,15 +732,22 @@ const seedDatabase = catchAsync(async (req, res, next) => {
   const studentUser = await User.create({
     name: 'Student User',
     email: 'student@example.com',
-    password: 'password123',
+    password: 'P@ssword123!',
     role: 'Student',
   });
 
   const csUser = await User.create({
     name: 'CS Agent',
     email: 'cs@example.com',
-    password: 'password123',
+    password: 'P@ssword123!',
     role: 'CustomerService',
+  });
+
+  const opsUser = await User.create({
+    name: 'Ops Manager',
+    email: 'ops@example.com',
+    password: 'P@ssword123!',
+    role: 'OperationsManager',
   });
 
   // 4) Seed Student Profile
@@ -323,12 +760,12 @@ const seedDatabase = catchAsync(async (req, res, next) => {
     status: 'Active',
   });
 
-  // 5) Seed Student Membership (expiring in 15 days)
+  // 5) Seed Student Membership (expiring in 5 days)
   const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 15); // Started 15 days ago
+  startDate.setDate(startDate.getDate() - 25); // Started 25 days ago
   
   const endDate = new Date(startDate);
-  endDate.setMonth(startDate.getMonth() + 1); // Valid for 1 month (expires in 15 days from now)
+  endDate.setMonth(startDate.getMonth() + 1); // Valid for 1 month (expires in 5 days from now)
 
   const createdMembership = await Membership.create({
     student: studentProfile._id,
@@ -407,5 +844,8 @@ module.exports = {
   forgotPassword,
   resetPassword,
   seedDatabase,
+  verify2FA,
+  approveDevice,
+  checkDeviceApproval,
 };
 
