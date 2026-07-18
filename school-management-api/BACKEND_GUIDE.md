@@ -9,6 +9,7 @@ Welcome to the backend developer guide and local API reference for the **School 
 This backend service is a secure **RESTful API** designed to manage gym memberships, payments, student profiles, customer complaints, customer service call logs, notifications, and analytics dashboards.
 
 ### Technology Stack
+
 - **Runtime Environment**: Node.js (v18+)
 - **Web Framework**: Express.js (v5.2+)
 - **Database**: MongoDB (Atlas) via Mongoose ODM (v9.7+)
@@ -74,7 +75,9 @@ school-management-api/
 The system contains **10 core schemas** managed through Mongoose:
 
 ### 1. User (`User`)
+
 Represents login credentials, roles, and session security tracking.
+
 - `name` (String, required)
 - `email` (String, unique, lowercase, required)
 - `password` (String, select: false, minlength: 10, custom regex strength validator)
@@ -87,7 +90,9 @@ Represents login credentials, roles, and session security tracking.
 - `activeRefreshTokens` (Array: `jti`, `expiresAt`)
 
 ### 2. Student (`Student`)
+
 Represents the student profile card. Connected via `email`.
+
 - `name` (String, required)
 - `email` (String, required, unique)
 - `phone` (String, required)
@@ -96,7 +101,9 @@ Represents the student profile card. Connected via `email`.
 - `status` (String, enum: `Active`, `Expiring`, `Expired`, `Inactive`)
 
 ### 3. MembershipPlan (`MembershipPlan`)
+
 Pre-configured subscription plan tiers.
+
 - `name` (String, required, unique) - e.g., Basic, Premium, VIP
 - `price` (Number, required)
 - `duration` (Number, required) - duration in months
@@ -104,7 +111,9 @@ Pre-configured subscription plan tiers.
 - `active` (Boolean, default: true)
 
 ### 4. Membership (`Membership`)
+
 An active student subscription record mapping a profile to a plan.
+
 - `student` (Ref: `Student`, required)
 - `plan` (Ref: `MembershipPlan`, required)
 - `startDate` (Date, required)
@@ -112,7 +121,9 @@ An active student subscription record mapping a profile to a plan.
 - `status` (String, enum: `Active`, `Expiring`, `Expired`)
 
 ### 5. Payment (`Payment`)
+
 Billing transactions uploaded by students for verification.
+
 - `student` (Ref: `User`, required)
 - `studentEmail` (String, required)
 - `membershipPlan` (Ref: `MembershipPlan`, required)
@@ -123,7 +134,9 @@ Billing transactions uploaded by students for verification.
 - `reviewedAt` (Date)
 
 ### 6. Complaint (`Complaint`)
+
 Customer service feedback tickets raised by students.
+
 - `student` (Ref: `Student`, required)
 - `title` (String, required)
 - `description` (String, required)
@@ -131,7 +144,9 @@ Customer service feedback tickets raised by students.
 - `status` (String, enum: `Created`, `Assigned`, `UnderReview`, `Solved`, `Closed`)
 
 ### 7. CallLog (`CallLog`)
+
 Log entries documenting CS outbound support interactions.
+
 - `agent` (Ref: `User`, required)
 - `student` (Ref: `Student`, required)
 - `notes` (String, required)
@@ -139,7 +154,9 @@ Log entries documenting CS outbound support interactions.
 - `result` (String, enum: `No Answer`, `Interested`, `Follow-up`, `Joined`, `Upgraded`)
 
 ### 8. Notification (`Notification`)
+
 System alerts delivered to user notifications bell.
+
 - `user` (Ref: `User`, required)
 - `title` (String, required)
 - `message` (String, required)
@@ -147,14 +164,18 @@ System alerts delivered to user notifications bell.
 - `read` (Boolean, default: false)
 
 ### 9. ReminderJob (`ReminderJob`)
+
 Pre-scheduled jobs that track when to prompt students for renewals (usually 7 days before expiry).
+
 - `student` (Ref: `Student`, required)
 - `membership` (Ref: `Membership`, required)
 - `reminderDate` (Date, required)
 - `status` (String, enum: `Pending`, `Sent`, `Failed`)
 
 ### 10. AuditLog (`AuditLog`)
+
 Immutable security ledger logging administrative changes.
+
 - `user` (Ref: `User`) - who performed the action
 - `userEmail` (String)
 - `action` (String, required)
@@ -189,18 +210,18 @@ sequenceDiagram
 
 The backend secures routes granularly by checking role allowances defined in `src/config/rbac.config.js`:
 
-| Module | Action | Student | CustomerService | OperationsManager | Admin | CEO |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **users** | read / write | ❌ | ❌ | ❌ | ✅ | ✅ |
-| **students** | read / write | own | ✅ | ✅ | ✅ | ✅ |
-| **memberships** | read / write | own | ✅ | ✅ | ✅ | ✅ |
-| **payments** | create / read / approve | own | read / approve | read | read | ✅ |
-| **complaints** | create / read / update | own | ✅ | read | read | ✅ |
-| **call-logs** | create / read | ❌ | ✅ | read | read | ✅ |
-| **reports** | read / sync | ❌ | ❌ | ❌ | read | ✅ |
-| **dashboard** | read | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Module          | Action                  | Student | CustomerService | OperationsManager | Admin | CEO |
+| :-------------- | :---------------------- | :-----: | :-------------: | :---------------: | :---: | :-: |
+| **users**       | read / write            |   ❌    |       ❌        |        ❌         |  ✅   | ✅  |
+| **students**    | read / write            |   own   |       ✅        |        ✅         |  ✅   | ✅  |
+| **memberships** | read / write            |   own   |       ✅        |        ✅         |  ✅   | ✅  |
+| **payments**    | create / read / approve |   own   | read / approve  |       read        | read  | ✅  |
+| **complaints**  | create / read / update  |   own   |       ✅        |       read        | read  | ✅  |
+| **call-logs**   | create / read           |   ❌    |       ✅        |       read        | read  | ✅  |
+| **reports**     | read / sync             |   ❌    |       ❌        |        ❌         | read  | ✅  |
+| **dashboard**   | read                    |   ❌    |       ✅        |        ✅         |  ✅   | ✅  |
 
-*Note: `own` restricts resource filters programmatically so students can only view or query their own records.*
+_Note: `own` restricts resource filters programmatically so students can only view or query their own records._
 
 ---
 
@@ -209,6 +230,7 @@ The backend secures routes granularly by checking role allowances defined in `sr
 ### 🔐 Auth Endpoints
 
 #### Login
+
 - **Endpoint**: `POST http://localhost:5000/api/v1/auth/login`
 - **Request Body**:
   ```json
@@ -230,6 +252,7 @@ The backend secures routes granularly by checking role allowances defined in `sr
   ```
 
 #### Verify 2FA & Device Recognition
+
 - **Endpoint**: `POST http://localhost:5000/api/v1/auth/verify-2fa`
 - **Request Body**:
   ```json
@@ -240,7 +263,7 @@ The backend secures routes granularly by checking role allowances defined in `sr
   }
   ```
 - **Response (If approved device, 200)**:
-  *Sets HTTP-only Cookie `refreshToken`*
+  _Sets HTTP-only Cookie `refreshToken`_
   ```json
   {
     "status": "success",
@@ -268,6 +291,7 @@ The backend secures routes granularly by checking role allowances defined in `sr
   ```
 
 #### Check Device Status (Polling)
+
 - **Endpoint**: `POST http://localhost:5000/api/v1/auth/check-device-approval`
 - **Request Body**:
   ```json
@@ -277,7 +301,7 @@ The backend secures routes granularly by checking role allowances defined in `sr
   }
   ```
 - **Response (Approved, 200)**:
-  *Sets rotated `refreshToken` Cookie*
+  _Sets rotated `refreshToken` Cookie_
   ```json
   {
     "status": "success",
@@ -286,10 +310,11 @@ The backend secures routes granularly by checking role allowances defined in `sr
   ```
 
 #### Rotate Refresh Token
+
 - **Endpoint**: `POST http://localhost:5000/api/v1/auth/refresh-token`
 - **Headers**: Cookie `refreshToken=...` must be attached
 - **Response (Success, 200)**:
-  *Sets new rotated `refreshToken` Cookie*
+  _Sets new rotated `refreshToken` Cookie_
   ```json
   {
     "status": "success",
@@ -309,6 +334,7 @@ The backend secures routes granularly by checking role allowances defined in `sr
 ### 💳 Payments & Receipts Upload
 
 #### Upload Proof
+
 - **Endpoint**: `POST http://localhost:5000/api/v1/payments/upload-proof`
 - **Headers**: `Authorization: Bearer <accessToken>`
 - **Request Body (Multipart Form-Data)**:
@@ -336,6 +362,7 @@ The backend secures routes granularly by checking role allowances defined in `sr
 ### ⚠️ Complaints
 
 #### File Complaint
+
 - **Endpoint**: `POST http://localhost:5000/api/v1/complaints`
 - **Headers**: `Authorization: Bearer <accessToken>`
 - **Request Body**:
@@ -366,6 +393,7 @@ The backend secures routes granularly by checking role allowances defined in `sr
 ### 📊 Dashboard & Reports
 
 #### Dashboard stats
+
 - **Endpoint**: `GET http://localhost:5000/api/v1/dashboard/stats`
 - **Headers**: `Authorization: Bearer <accessToken>`
 - **Response (Success, 200)**:
@@ -396,7 +424,10 @@ The backend secures routes granularly by checking role allowances defined in `sr
           "name": "Student User",
           "email": "student@example.com",
           "riskLevel": "High",
-          "riskDetails": { "score": 65, "factors": ["Pending Payment", "Open Complaint"] }
+          "riskDetails": {
+            "score": 65,
+            "factors": ["Pending Payment", "Open Complaint"]
+          }
         }
       ]
     }
@@ -410,31 +441,37 @@ The backend secures routes granularly by checking role allowances defined in `sr
 Here is copy-pasteable JavaScript code that frontend developers can use to interact with the backend API.
 
 ### Core API Client (With Auto-Refresh & Credentials Support)
+
 This helper automatically injects the `Authorization` header, handles cross-origin cookie credentials, monitors for `401` errors, calls the token rotation endpoint, updates state, and retries the request seamlessly.
 
 ```javascript
 // client.js
 let accessToken = null; // Store in memory only for XSS protection
 
-const BASE_URL = 'http://localhost:5000/api/v1';
+const BASE_URL = "http://localhost:5000/api/v1";
 
-async function apiRequest(endpoint, method = 'GET', body = null, isMultipart = false) {
+async function apiRequest(
+  endpoint,
+  method = "GET",
+  body = null,
+  isMultipart = false,
+) {
   const headers = {};
-  
+
   // Attach Access Token if available
   if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
+    headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
   // Set JSON content-type if not uploading file
   if (!isMultipart && body) {
-    headers['Content-Type'] = 'application/json';
+    headers["Content-Type"] = "application/json";
   }
 
   const options = {
     method,
     headers,
-    credentials: 'include' // CRITICAL: Tells browser to include cookies (refresh token)
+    credentials: "include", // CRITICAL: Tells browser to include cookies (refresh token)
   };
 
   if (body) {
@@ -442,24 +479,24 @@ async function apiRequest(endpoint, method = 'GET', body = null, isMultipart = f
   }
 
   const response = await fetch(`${BASE_URL}${endpoint}`, options);
-  
+
   // Handle unauthorized / expired access token (Auto-refresh)
-  if (response.status === 401 && endpoint !== '/auth/refresh-token') {
-    console.warn('Access token expired. Attempting token rotation...');
+  if (response.status === 401 && endpoint !== "/auth/refresh-token") {
+    console.warn("Access token expired. Attempting token rotation...");
     const refreshSuccess = await refreshAccessToken();
     if (refreshSuccess) {
       // Retry original request with new token
       return apiRequest(endpoint, method, body, isMultipart);
     } else {
       // Direct user to login page
-      window.dispatchEvent(new Event('logout-user'));
-      throw new Error('Session expired. Please log in again.');
+      window.dispatchEvent(new Event("logout-user"));
+      throw new Error("Session expired. Please log in again.");
     }
   }
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || 'API request failed');
+    throw new Error(data.message || "API request failed");
   }
 
   return data;
@@ -469,8 +506,8 @@ async function apiRequest(endpoint, method = 'GET', body = null, isMultipart = f
 async function refreshAccessToken() {
   try {
     const res = await fetch(`${BASE_URL}/auth/refresh-token`, {
-      method: 'POST',
-      credentials: 'include'
+      method: "POST",
+      credentials: "include",
     });
     if (res.ok) {
       const data = await res.json();
@@ -479,7 +516,7 @@ async function refreshAccessToken() {
     }
     return false;
   } catch (err) {
-    console.error('Failed to rotate refresh token:', err);
+    console.error("Failed to rotate refresh token:", err);
     return false;
   }
 }
@@ -491,9 +528,9 @@ async function refreshAccessToken() {
 // 1. Initial Login Request
 async function loginUser(email, password) {
   try {
-    const res = await apiRequest('/auth/login', 'POST', { email, password });
+    const res = await apiRequest("/auth/login", "POST", { email, password });
     if (res.twoFactorRequired) {
-      console.log('OTP Code generated (Local Dev):', res.otp);
+      console.log("OTP Code generated (Local Dev):", res.otp);
       return { twoFactorRequired: true, userId: res.userId };
     }
   } catch (err) {
@@ -504,10 +541,16 @@ async function loginUser(email, password) {
 // 2. Complete 2FA Login and poll if browser is unrecognized
 async function verify2FA(userId, otp, deviceId) {
   try {
-    const res = await apiRequest('/auth/verify-2fa', 'POST', { userId, otp, deviceId });
-    
+    const res = await apiRequest("/auth/verify-2fa", "POST", {
+      userId,
+      otp,
+      deviceId,
+    });
+
     if (res.deviceApprovalRequired) {
-      alert('Unrecognized browser detected. Please check your email for the approval link.');
+      alert(
+        "Unrecognized browser detected. Please check your email for the approval link.",
+      );
       // Start polling for approval status
       startDevicePolling(userId, deviceId);
       return { pendingApproval: true };
@@ -524,11 +567,14 @@ async function verify2FA(userId, otp, deviceId) {
 function startDevicePolling(userId, deviceId) {
   const interval = setInterval(async () => {
     try {
-      const res = await apiRequest('/auth/check-device-approval', 'POST', { userId, deviceId });
-      if (res.status === 'success') {
+      const res = await apiRequest("/auth/check-device-approval", "POST", {
+        userId,
+        deviceId,
+      });
+      if (res.status === "success") {
         clearInterval(interval);
         accessToken = res.accessToken; // Logged in!
-        alert('Device approved! You have been logged in.');
+        alert("Device approved! You have been logged in.");
         window.location.reload(); // Redirect to home
       }
     } catch (err) {
@@ -543,14 +589,21 @@ function startDevicePolling(userId, deviceId) {
 ```javascript
 async function uploadPaymentProof(membershipPlanId, fileObject) {
   const formData = new FormData();
-  formData.append('membershipPlanId', membershipPlanId);
-  formData.append('proof', fileObject); // File attachment input
+  formData.append("membershipPlanId", membershipPlanId);
+  formData.append("proof", fileObject); // File attachment input
 
   try {
-    const res = await apiRequest('/payments/upload-proof', 'POST', formData, true);
-    alert('Proof uploaded successfully! Path: ' + res.data.payment.proofOfPayment);
+    const res = await apiRequest(
+      "/payments/upload-proof",
+      "POST",
+      formData,
+      true,
+    );
+    alert(
+      "Proof uploaded successfully! Path: " + res.data.payment.proofOfPayment,
+    );
   } catch (err) {
-    alert(`Upload rejected: ${err.message}`); 
+    alert(`Upload rejected: ${err.message}`);
     // Captures file size limit errors, extension restrictions, and malware scan failures
   }
 }
@@ -561,8 +614,10 @@ async function uploadPaymentProof(membershipPlanId, fileObject) {
 ```javascript
 async function fileSupportTicket(title, description) {
   try {
-    const res = await apiRequest('/complaints', 'POST', { title, description });
-    alert(`Ticket #${res.data.complaint._id} created! Status: ${res.data.complaint.status}`);
+    const res = await apiRequest("/complaints", "POST", { title, description });
+    alert(
+      `Ticket #${res.data.complaint._id} created! Status: ${res.data.complaint.status}`,
+    );
   } catch (err) {
     alert(`Failed to file complaint: ${err.message}`);
   }
@@ -574,11 +629,14 @@ async function fileSupportTicket(title, description) {
 ```javascript
 async function loadDashboardStats() {
   try {
-    const res = await apiRequest('/dashboard/stats', 'GET');
-    console.log('Metrics:', res.data.metrics);
-    console.log('Priority Support Queue (Sorted by Risk):', res.data.highRiskStudents);
+    const res = await apiRequest("/dashboard/stats", "GET");
+    console.log("Metrics:", res.data.metrics);
+    console.log(
+      "Priority Support Queue (Sorted by Risk):",
+      res.data.highRiskStudents,
+    );
   } catch (err) {
-    console.error('Failed to load stats:', err.message);
+    console.error("Failed to load stats:", err.message);
   }
 }
 ```
@@ -588,6 +646,7 @@ async function loadDashboardStats() {
 ## 8. Cron Jobs & Expiring Subscriptions Checks
 
 Rather than running a persistent scheduling engine (like `node-cron`) during local development, subscription lifecycle evaluations are simulated on-demand:
+
 - **Simulate Route**: `POST http://localhost:5000/api/v1/memberships/simulate-expiry`
 - **Trigger Access**: Requires CS Agent, Admin, or CEO token credentials.
 - **Actions Performed**:
@@ -619,7 +678,9 @@ CORS_ORIGIN=*
 ## 10. Developer Verification Checklists
 
 ### 🧪 Automated Tests Suite
+
 Verify changes programmatically using verification scripts saved in the `scratch/` directory:
+
 - **Refresh Token Rotation & MFA device approval**:
   `node scratch/test_security_flows.js`
 - **Secure uploads, extension whitelist & virus scan**:
@@ -630,6 +691,7 @@ Verify changes programmatically using verification scripts saved in the `scratch
   `node scratch/test_risk_notifications.js`
 
 ### 📋 Manual API Security Checklist
+
 - [ ] **Verify Authentication**: Try accessing `/dashboard/stats` without headers. Should fail with `401`.
 - [ ] **Verify Password Constraints**: Try registering a user with password `password123`. Request should fail with `400` details.
 - [ ] **Verify Upload Integrity**: Attempt uploading `trojan.exe` to `/payments/upload-proof`. Multer should reject it.
